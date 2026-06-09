@@ -1,0 +1,17 @@
+// src/modules/product-media/product-media.module.ts
+
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductsModule } from '../products/products.module';
+import { ProductMedia } from './entities/product-media.entity';
+import { ProductMediaAdminController } from './product-media-admin.controller';
+import { ProductMediaService } from './product-media.service';
+import { ProductMediaRepository } from './repositories/product-media.repository';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([ProductMedia]), ProductsModule],
+  controllers: [ProductMediaAdminController],
+  providers: [ProductMediaService, ProductMediaRepository],
+  exports: [ProductMediaService, ProductMediaRepository, TypeOrmModule],
+})
+export class ProductMediaModule {}

@@ -1,0 +1,218 @@
+{
+  "main": {
+    "id": "ec0c5a83292f3f6e",
+    "type": "split",
+    "children": [
+      {
+        "id": "76caccba451246b5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "485bd591115cc4c3",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e3280225cc6b7eae",
+    "type": "split",
+    "children": [
+      {
+        "id": "6f807a229b171b3d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "eb751fcfbd1dc976",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "6638d032e6c9bd6b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "ff545b25dfed1db4",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "08a10d9ac9d2a216",
+    "type": "split",
+    "children": [
+      {
+        "id": "f1791b5347c43c28",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b023d2bc0f93b4aa",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "4ec2b6d2a13d45e1",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "18ee829636a33116",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "ad56d33d732ce707",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "b529336effebb03e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "485bd591115cc4c3",
+  "lastOpenFiles": [
+    "postman/cart-endpoint-tests-single-collection/README.txt",
+    "postman/cart-endpoint-tests-single-collection/cart-endpoint-tests.postman_collection.json",
+    "postman/cart-endpoint-tests-single-collection",
+    "docs/basearchitecturedocs/postman-json-generation-protocol.md",
+    "postman/README.txt",
+    "postman/category-product-role-tests.postman_collection.json",
+    "docs/category-product-status-update-prompt-result.md",
+    "docs/category-product-status-update-prompt-resul.md",
+    "dist/tsconfig.build.tsbuildinfo",
+    "dist/modules/orders/enums/shipping-option.enum.d.ts",
+    "dist/modules/orders/enums/shipping-option.enum.js",
+    "dist/modules/orders/enums/shipping-option.enum.js.map",
+    "dist/modules/orders/enums/order-address-role.enum.js.map",
+    "dist/modules/orders/enums/order-address-role.enum.js",
+    "docs/category-product-status-update-prompt.md",
+    "docs/basearchitecturedocs/rbac-role-permission-matrix.md",
+    "docs/basearchitecturedocs/rbac-module-guide.md",
+    "docs/basearchitecturedocs/rbac-api-contract.md",
+    "docs/basearchitecturedocs/postman-import-zip-protocol.md",
+    "docs/basearchitecturedocs/nestjs-entities-and-relations.md",
+    "docs/basearchitecturedocs/nestjs-api-contract.md",
+    "docs/basearchitecturedocs/markdown-link-protocol.md",
+    "docs/basearchitecturedocs/markdown-document-creation-protocol.md",
+    "docs/basearchitecturedocs/backend-module-patterns.md",
+    "docs/basearchitecturedocs/backend-docs-index.md",
+    "docs/basearchitecturedocs/architectureguide.md",
+    "docs/rbac-role-permission-matrix.md",
+    "docs/postman-import-zip-protocol.md",
+    "docs/cart-implementation-prompt-V2-result.md",
+    "docs/cart-implementation-prompt-V2.md",
+    "docs/cart-implementation-prompt copy.md",
+    "docs/checkout-reference-update-prompt-result.md",
+    "docs/checkout-reference-update-prompt.md",
+    "docs/markdown-document-creation-protocol.md",
+    "docs/cart-implementation-prompt-result.md",
+    "docs/cart-implementation-prompt.md"
+  ]
+}
