@@ -1,0 +1,2751 @@
+{
+  "info": {
+    "name": "Simsir - 04 Checkout Reference Role Tests",
+    "_postman_id": "7a9020d2-6135-4cbf-85aa-cf849480e187",
+    "description": "Single collection with folders for checkout reference public and RBAC role tests. Requires Backend_URL and role access token environment variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Public Checkout Reference",
+      "item": [
+        {
+          "name": "GET /api/shipping-carriers - no token should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "shipping-carriers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/payment-methods - no token should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});",
+                  "pm.test('Conditional payment methods expose shipping-aware fields when present', function () {",
+                  "  const json = pm.response.json();",
+                  "  if (!json.items.length) return;",
+                  "  const conditional = json.items.find((item) => ['cash_on_delivery', 'card_on_delivery'].includes(item.code));",
+                  "  if (!conditional) return;",
+                  "  pm.expect(conditional).to.have.property('isConditionalMethod');",
+                  "  pm.expect(conditional).to.have.property('isSelectable');",
+                  "  pm.expect(conditional).to.have.property('availabilityReason');",
+                  "});",
+                  "pm.test('Payment methods may include provider arrays', function () {",
+                  "  const json = pm.response.json();",
+                  "  if (!json.items.length) return;",
+                  "  const withProviders = json.items.find((item) => Array.isArray(item.providers));",
+                  "  if (!withProviders) return;",
+                  "  pm.expect(withProviders.providers).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/payment-methods",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "payment-methods"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/payment-methods?shippingServiceId=:id - no token should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Shipping-aware payment response may include providers and eligibility metadata', function () {",
+                  "  const json = pm.response.json();",
+                  "  if (!json.items.length) return;",
+                  "  const first = json.items[0];",
+                  "  pm.expect(first).to.have.property('isSelectable');",
+                  "  pm.expect(first).to.have.property('providers');",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('Backend_URL') + '/api/shipping-carriers',",
+                  "  method: 'GET',",
+                  "  header: { Accept: 'application/json' }",
+                  "}, function (err, res) {",
+                  "  if (err) throw err;",
+                  "  const json = res.json();",
+                  "  const firstService = json.items && json.items[0];",
+                  "  if (!firstService || !firstService.id) {",
+                  "    throw new Error('No shipping service found for payment-methods public test');",
+                  "  }",
+                  "  pm.environment.set('checkoutReferenceRoleTestPublicShippingServiceId', firstService.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/payment-methods?shippingServiceId={{checkoutReferenceRoleTestPublicShippingServiceId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "payment-methods"
+              ],
+              "query": [
+                {
+                  "key": "shippingServiceId",
+                  "value": "{{checkoutReferenceRoleTestPublicShippingServiceId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 CUSTOMER Access",
+      "item": [
+        {
+          "name": "CUSTOMER - GET /api/admin/shipping-carriers should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 SUPER_ADMIN Access",
+      "item": [
+        {
+          "name": "SUPER_ADMIN - GET /api/admin/shipping-carriers should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{super_admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 ORDER_MANAGER Shipping Admin CRUD",
+      "item": [
+        {
+          "name": "ORDER_MANAGER - GET /api/admin/shipping-carriers should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/shipping-carriers should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Save shipping carrier id to environment', function () {",
+                  "  const json = pm.response.json();",
+                  "  const entity = json.data || json.item || json;",
+                  "  const id = entity.id || entity.shippingCarrierId || entity.paymentMethodId;",
+                  "  pm.expect(id, 'created entity id').to.be.a('string').and.not.empty;",
+                  "  pm.expect(entity.code).to.match(/^om_test_shipping_/);",
+                  "  pm.environment.set('checkoutReferenceRoleTestShippingCarrierId', id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"om_test_shipping_{{$timestamp}}\",\n  \"name\": \"OM Test Shipping {{$timestamp}}\",\n  \"description\": \"OM Test Shipping Description {{$timestamp}}\",\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET created shipping carrier detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Shipping carrier detail id matches created carrier id', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('checkoutReferenceRoleTestShippingCarrierId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH created shipping carrier should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Shipping carrier update changed expected fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('checkoutReferenceRoleTestShippingCarrierId'));",
+                  "  pm.expect(json.name).to.include('Updated');",
+                  "  pm.expect(json.description).to.include('Updated');",
+                  "  pm.expect(json.sortOrder).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"OM Test Shipping Updated {{$timestamp}}\",\n  \"description\": \"OM Test Shipping Updated Description {{$timestamp}}\",\n  \"sortOrder\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH created shipping carrier status inactive should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response status is inactive', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('inactive');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/status",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - DELETE created shipping carrier should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET deleted shipping carrier detail should return 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST replacement shipping carrier for service nesting should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Save replacement shipping carrier id to environment', function () {",
+                  "  const json = pm.response.json();",
+                  "  const entity = json.data || json.item || json;",
+                  "  const id = entity.id || entity.shippingCarrierId;",
+                  "  pm.expect(id, 'replacement shipping carrier id').to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('checkoutReferenceRoleTestShippingCarrierId', id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"om_test_shipping_nested_{{$timestamp}}\",\n  \"name\": \"OM Test Shipping Nested {{$timestamp}}\",\n  \"description\": \"OM Test Shipping Nested Description {{$timestamp}}\",\n  \"sortOrder\": 30,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/shipping-carriers/:id/services should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Save shipping carrier service id to environment', function () {",
+                  "  const json = pm.response.json();",
+                  "  const services = (json.services || []).filter(Boolean);",
+                  "  const created = services.find((item) => item.code === pm.environment.get('checkoutReferenceRoleTestShippingServiceCode'));",
+                  "  pm.expect(created, 'created shipping carrier service').to.exist;",
+                  "  pm.expect(created.id, 'created shipping carrier service id').to.be.a('string').and.not.empty;",
+                  "  pm.expect(created.code).to.eql(pm.environment.get('checkoutReferenceRoleTestShippingServiceCode'));",
+                  "  pm.environment.set('checkoutReferenceRoleTestShippingServiceId', created.id);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('checkoutReferenceRoleTestShippingServiceCode', 'om_test_service_' + Date.now());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/services",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "services"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{checkoutReferenceRoleTestShippingServiceCode}}\",\n  \"name\": \"OM Test Service {{$timestamp}}\",\n  \"price\": 79,\n  \"currency\": \"TRY\",\n  \"estimatedDeliveryText\": \"2-3 is gunu\",\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/shipping-carriers/:carrierId/services/:serviceId/payment-capabilities should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Created capability is visible under matching service', function () {",
+                  "  const json = pm.response.json();",
+                  "  const services = json.services || [];",
+                  "  const service = services.find((item) => item.id === pm.environment.get('checkoutReferenceRoleTestShippingServiceId'));",
+                  "  pm.expect(service, 'shipping carrier service').to.exist;",
+                  "  const capability = (service.paymentCapabilities || []).find((item) => item.paymentMethod === 'cash_on_delivery');",
+                  "  pm.expect(capability, 'shipping service payment capability').to.exist;",
+                  "  pm.expect(capability.status).to.eql('active');",
+                  "  pm.environment.set('checkoutReferenceRoleTestShippingCapabilityId', capability.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/services/{{checkoutReferenceRoleTestShippingServiceId}}/payment-capabilities",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "services",
+                "{{checkoutReferenceRoleTestShippingServiceId}}",
+                "payment-capabilities"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"cash_on_delivery\",\n  \"fee\": 25,\n  \"currency\": \"TRY\",\n  \"minOrderAmount\": null,\n  \"maxOrderAmount\": null,\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 ORDER_MANAGER Payment Admin CRUD",
+      "item": [
+        {
+          "name": "ORDER_MANAGER - GET /api/admin/payment-methods should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/payment-methods should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Save payment method id to environment', function () {",
+                  "  const json = pm.response.json();",
+                  "  const entity = json.data || json.item || json;",
+                  "  const id = entity.id || entity.shippingCarrierId || entity.paymentMethodId;",
+                  "  pm.expect(id, 'created entity id').to.be.a('string').and.not.empty;",
+                  "  pm.expect(entity.code).to.match(/^om_test_payment_/);",
+                  "  pm.environment.set('checkoutReferenceRoleTestPaymentMethodId', id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"om_test_payment_{{$timestamp}}\",\n  \"name\": \"OM Test Payment {{$timestamp}}\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET created payment method detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Payment method detail id matches created payment method id', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('checkoutReferenceRoleTestPaymentMethodId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH created payment method should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Payment method update changed expected fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('checkoutReferenceRoleTestPaymentMethodId'));",
+                  "  pm.expect(json.name).to.include('Updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"OM Test Payment Updated {{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH created payment method status inactive should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response status is inactive', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('inactive');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/status",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/payment-methods/:id/providers should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Save payment provider id to environment', function () {",
+                  "  const json = pm.response.json();",
+                  "  const providers = (json.providers || []).filter(Boolean);",
+                  "  const created = providers.find((item) => item.code === pm.environment.get('checkoutReferenceRoleTestPaymentProviderCode'));",
+                  "  pm.expect(created, 'created payment provider').to.exist;",
+                  "  pm.expect(created.id, 'created payment provider id').to.be.a('string').and.not.empty;",
+                  "  pm.expect(created.code).to.eql(pm.environment.get('checkoutReferenceRoleTestPaymentProviderCode'));",
+                  "  pm.environment.set('checkoutReferenceRoleTestPaymentProviderId', created.id);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('checkoutReferenceRoleTestPaymentProviderCode', 'om_test_provider_' + Date.now());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/providers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "providers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{checkoutReferenceRoleTestPaymentProviderCode}}\",\n  \"name\": \"OM Test Provider {{$timestamp}}\",\n  \"providerType\": \"PSP\",\n  \"description\": \"OM Test Provider Description\",\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH /api/admin/payment-methods/:id/providers/:providerId should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Payment provider update changed expected fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  const provider = (json.providers || []).find((item) => item.id === pm.environment.get('checkoutReferenceRoleTestPaymentProviderId'));",
+                  "  pm.expect(provider).to.exist;",
+                  "  pm.expect(provider.name).to.include('Updated');",
+                  "  pm.expect(provider.description).to.include('Updated');",
+                  "  pm.expect(provider.sortOrder).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/providers/{{checkoutReferenceRoleTestPaymentProviderId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "providers",
+                "{{checkoutReferenceRoleTestPaymentProviderId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"OM Test Provider Updated {{$timestamp}}\",\n  \"description\": \"OM Test Provider Updated Description\",\n  \"sortOrder\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PATCH /api/admin/payment-methods/:id/providers/:providerId/status inactive should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Payment provider status changed to inactive', function () {",
+                  "  const json = pm.response.json();",
+                  "  const provider = (json.providers || []).find((item) => item.id === pm.environment.get('checkoutReferenceRoleTestPaymentProviderId'));",
+                  "  pm.expect(provider).to.exist;",
+                  "  pm.expect(provider.status).to.eql('inactive');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/providers/{{checkoutReferenceRoleTestPaymentProviderId}}/status",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "providers",
+                "{{checkoutReferenceRoleTestPaymentProviderId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"inactive\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 SUPPORT_STAFF Read 200 Write 403",
+      "item": [
+        {
+          "name": "SUPPORT_STAFF - GET /api/admin/shipping-carriers should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - POST /api/admin/shipping-carriers should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"support_forbidden_shipping_{{$timestamp}}\",\n  \"name\": \"Support Forbidden Shipping\",\n  \"description\": \"Support Forbidden Shipping\",\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - PATCH /api/admin/shipping-carriers/:id should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Should Not Update\",\n  \"description\": \"Support Should Not Update\",\n  \"sortOrder\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - PATCH /api/admin/shipping-carriers/:id/status should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/status",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - DELETE /api/admin/shipping-carriers/:id should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - GET /api/admin/payment-methods should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response has items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - POST /api/admin/payment-methods should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"support_forbidden_payment_{{$timestamp}}\",\n  \"name\": \"Support Forbidden Payment\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - PATCH /api/admin/payment-methods/:id should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Should Not Update\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - PATCH /api/admin/payment-methods/:id/status should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/status",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - POST /api/admin/payment-methods/:id/providers should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/providers",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "providers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"support_forbidden_provider_{{$timestamp}}\",\n  \"name\": \"Support Forbidden Provider\",\n  \"providerType\": \"PSP\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - DELETE /api/admin/payment-methods/:id should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 ORDER_MANAGER Cleanup",
+      "item": [
+        {
+          "name": "ORDER_MANAGER - DELETE /api/admin/payment-methods/:id/providers/:providerId should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}/providers/{{checkoutReferenceRoleTestPaymentProviderId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}",
+                "providers",
+                "{{checkoutReferenceRoleTestPaymentProviderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET payment method detail after provider delete should return 200 and omit provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Deleted payment provider is absent from payment method detail', function () {",
+                  "  const json = pm.response.json();",
+                  "  const exists = (json.providers || []).some((item) => item.id === pm.environment.get('checkoutReferenceRoleTestPaymentProviderId'));",
+                  "  pm.expect(exists).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - DELETE created payment method should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET deleted payment method detail should return 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/payment-methods/{{checkoutReferenceRoleTestPaymentMethodId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payment-methods",
+                "{{checkoutReferenceRoleTestPaymentMethodId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - DELETE /api/admin/shipping-carriers/:carrierId/services/:serviceId/payment-capabilities/:capabilityId should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/services/{{checkoutReferenceRoleTestShippingServiceId}}/payment-capabilities/{{checkoutReferenceRoleTestShippingCapabilityId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "services",
+                "{{checkoutReferenceRoleTestShippingServiceId}}",
+                "payment-capabilities",
+                "{{checkoutReferenceRoleTestShippingCapabilityId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET shipping carrier detail after capability delete should return 200 and omit capability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Deleted shipping capability is absent from shipping carrier detail', function () {",
+                  "  const json = pm.response.json();",
+                  "  const service = (json.services || []).find((item) => item.id === pm.environment.get('checkoutReferenceRoleTestShippingServiceId'));",
+                  "  pm.expect(service).to.exist;",
+                  "  const exists = (service.paymentCapabilities || []).some((item) => item.id === pm.environment.get('checkoutReferenceRoleTestShippingCapabilityId'));",
+                  "  pm.expect(exists).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - DELETE /api/admin/shipping-carriers/:id/services/:serviceId should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}/services/{{checkoutReferenceRoleTestShippingServiceId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}",
+                "services",
+                "{{checkoutReferenceRoleTestShippingServiceId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET shipping carrier detail after service delete should return 200 and omit service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Deleted shipping service is absent from shipping carrier detail', function () {",
+                  "  const json = pm.response.json();",
+                  "  const exists = (json.services || []).some((item) => item.id === pm.environment.get('checkoutReferenceRoleTestShippingServiceId'));",
+                  "  pm.expect(exists).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - DELETE replacement shipping carrier should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - GET deleted replacement shipping carrier detail should return 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "pm.environment.unset('checkoutReferenceRoleTestPublicShippingServiceId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestShippingCarrierId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestShippingServiceId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestShippingServiceCode');",
+                  "pm.environment.unset('checkoutReferenceRoleTestShippingCapabilityId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestPaymentMethodId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestPaymentProviderId');",
+                  "pm.environment.unset('checkoutReferenceRoleTestPaymentProviderCode');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/shipping-carriers/{{checkoutReferenceRoleTestShippingCarrierId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "shipping-carriers",
+                "{{checkoutReferenceRoleTestShippingCarrierId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

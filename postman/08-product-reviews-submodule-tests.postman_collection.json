@@ -1,0 +1,652 @@
+{
+  "info": {
+    "name": "Simsir - 08 Product Reviews Submodule Tests",
+    "_postman_id": "28a2ed91-ef33-4ffe-b8e5-8b63a01242e7",
+    "description": "ProductReviews submodule regression tests including V2 admin read/list/detail endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Prerequisite - Capture Active Product",
+      "item": [
+        {
+          "name": "GET /api/products?limit=1 - capture product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('At least one active product exists', function () { pm.expect(items.length).to.be.above(0); });",
+                  "if (items.length > 0) {",
+                  "  pm.environment.set('productReviewsSubmoduleTestProductId', items[0].id);",
+                  "  pm.environment.set('productReviewsSubmoduleTestProductSlug', items[0].slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products?limit=1",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products?limit=1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Public Product Review List",
+      "item": [
+        {
+          "name": "GET /api/products/:productId/reviews - public list should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Response has public review item shape', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  json.items.forEach(function (item) {",
+                  "    pm.expect(item.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.productId).to.eql(pm.environment.get('productReviewsSubmoduleTestProductId'));",
+                  "    pm.expect(item.ratingValue).to.be.a('number');",
+                  "    pm.expect(item.comment).to.be.a('string');",
+                  "    pm.expect(item.createdAt).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.author).to.be.an('object');",
+                  "    pm.expect(item.author.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.author.name).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.author.surname).to.be.a('string').and.not.empty;",
+                  "    if (Object.prototype.hasOwnProperty.call(item, 'userId')) {",
+                  "      pm.expect(item.userId).to.be.a('string').and.not.empty;",
+                  "    }",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productReviewsSubmoduleTestProductId}}/reviews",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Authenticated Review CRUD + Admin Read",
+      "item": [
+        {
+          "name": "POST /api/products/:productId/reviews - customer create review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('productReviewsSubmoduleTestReviewId', json.id); }",
+                  "pm.test('Created review response is correct', function () {",
+                  "  pm.expect(pm.environment.get('productReviewsSubmoduleTestReviewId')).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('productReviewsSubmoduleTestReviewId'));",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('productReviewsSubmoduleTestProductId'));",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('customer_user_id'));",
+                  "  pm.expect(json.ratingValue).to.eql(5);",
+                  "  pm.expect(json.comment).to.eql('Postman product review V2');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productReviewsSubmoduleTestProductId}}/reviews",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ratingValue\": 5,\n  \"comment\": \"Postman product review V2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/reviews - admin list should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Admin list includes created review', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  const reviewId = pm.environment.get('productReviewsSubmoduleTestReviewId');",
+                  "  const item = json.items.find(function (entry) { return entry.id === reviewId; });",
+                  "  pm.expect(item, 'Created review should appear in admin list').to.exist;",
+                  "  pm.expect(item.productId).to.eql(pm.environment.get('productReviewsSubmoduleTestProductId'));",
+                  "  pm.expect(item.userId).to.eql(pm.environment.get('customer_user_id'));",
+                  "  pm.expect(item.ratingValue).to.eql(5);",
+                  "  pm.expect(item.comment).to.eql('Postman product review V2');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productReviewsSubmoduleTestProductId}}/reviews",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/reviews/:reviewId - admin detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Admin detail returns created review', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('productReviewsSubmoduleTestReviewId'));",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('productReviewsSubmoduleTestProductId'));",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('customer_user_id'));",
+                  "  pm.expect(json.ratingValue).to.eql(5);",
+                  "  pm.expect(json.comment).to.eql('Postman product review V2');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/reviews/{{productReviewsSubmoduleTestReviewId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "reviews",
+                "{{productReviewsSubmoduleTestReviewId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/products/:productId/reviews/:reviewId - customer update own review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Customer update applies expected fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('productReviewsSubmoduleTestReviewId'));",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('productReviewsSubmoduleTestProductId'));",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('customer_user_id'));",
+                  "  pm.expect(json.ratingValue).to.eql(4);",
+                  "  pm.expect(json.comment).to.eql('Postman product review V2 updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productReviewsSubmoduleTestProductId}}/reviews/{{productReviewsSubmoduleTestReviewId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews",
+                "{{productReviewsSubmoduleTestReviewId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ratingValue\": 4,\n  \"comment\": \"Postman product review V2 updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 CUSTOMER Cannot Access Product Review Admin Endpoints",
+      "item": [
+        {
+          "name": "CUSTOMER GET /api/admin/products/:productId/reviews should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productReviewsSubmoduleTestProductId}}/reviews",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER GET /api/admin/products/reviews/:reviewId should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/reviews/{{productReviewsSubmoduleTestReviewId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "reviews",
+                "{{productReviewsSubmoduleTestReviewId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Unauthenticated Review Create Should Be 401",
+      "item": [
+        {
+          "name": "POST /api/products/:productId/reviews without token should return 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productReviewsSubmoduleTestProductId}}/reviews",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ratingValue\": 5,\n  \"comment\": \"Should fail without token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Cleanup Delete Review And Unset Temp Variables",
+      "item": [
+        {
+          "name": "DELETE /api/products/:productId/reviews/:reviewId - customer delete own review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productReviewsSubmoduleTestProductId}}/reviews/{{productReviewsSubmoduleTestReviewId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productReviewsSubmoduleTestProductId}}",
+                "reviews",
+                "{{productReviewsSubmoduleTestReviewId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER GET /api/admin/products/reviews/:reviewId should return 404 after delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Deleted review is absent', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(String(json.message || '')).to.not.equal('');",
+                  "});",
+                  "pm.environment.unset('productReviewsSubmoduleTestProductId');",
+                  "pm.environment.unset('productReviewsSubmoduleTestProductSlug');",
+                  "pm.environment.unset('productReviewsSubmoduleTestReviewId');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/reviews/{{productReviewsSubmoduleTestReviewId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "reviews",
+                "{{productReviewsSubmoduleTestReviewId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

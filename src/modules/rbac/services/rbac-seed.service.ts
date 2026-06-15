@@ -1,6 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { shouldRunSeed } from '../../../common/seed/seed-execution-policy';
 import { Permission } from '../entities/permission.entity';
 import { RolePermission } from '../entities/role-permission.entity';
 import { Role } from '../entities/role.entity';
@@ -10,10 +12,15 @@ import {
   RBAC_SEED_ROLES,
   RBAC_SEED_ROLE_PERMISSIONS,
 } from '../seed/rbac-seed.data';
+import { DemoUsersSeedService } from '../seed/demo-users-seed.service';
 
 @Injectable()
 export class RbacSeedService implements OnModuleInit {
+  private readonly logger = new Logger(RbacSeedService.name);
+
   constructor(
+    private readonly configService: ConfigService,
+
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
 
@@ -22,12 +29,20 @@ export class RbacSeedService implements OnModuleInit {
 
     @InjectRepository(RolePermission)
     private readonly rolePermissionRepository: Repository<RolePermission>,
+
+    private readonly demoUsersSeedService: DemoUsersSeedService,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.seedPermissions();
-    await this.seedRoles();
-    await this.seedRolePermissions();
+    if (!shouldRunSeed(this.configService, 'system')) {
+      this.logger.log('Skipping RBAC system seed.');
+    } else {
+      await this.seedPermissions();
+      await this.seedRoles();
+      await this.seedRolePermissions();
+    }
+
+    await this.demoUsersSeedService.seedDemoUsers();
   }
 
   private async seedPermissions(): Promise<void> {

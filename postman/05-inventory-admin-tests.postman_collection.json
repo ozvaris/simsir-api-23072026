@@ -1,0 +1,1289 @@
+{
+  "info": {
+    "name": "Simsir - 05 Inventory Admin Tests",
+    "_postman_id": "c3b84f69-86dd-44a3-8c13-inventory-admin-tests",
+    "description": "Single collection for seeded demo product inventory admin read/update/adjustment tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Auth Bootstrap",
+      "item": [
+        {
+          "name": "SUPER_ADMIN - Login and save access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Save super admin access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('super_admin_access_token', accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{super_admin_email}}\",\n  \"password\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - Login and save access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Save catalog manager access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('catalog_manager_access_token', accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{catalog_manager_email}}\",\n  \"password\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - Login and save access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Save order manager access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('order_manager_access_token', accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{order_manager_email}}\",\n  \"password\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - Login and save access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Save support staff access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken).to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('support_staff_access_token', accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{support_staff_email}}\",\n  \"password\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Resolve Seeded Demo Product",
+      "item": [
+        {
+          "name": "Public - GET /api/products/:slug should capture seeded product id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Seeded product detail includes inventory summary', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.slug).to.eql(pm.environment.get('demo_inventory_product_slug'));",
+                  "  pm.expect(json.inventory).to.be.an('object');",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.be.a('number');",
+                  "  pm.expect(json.inventory.reservedQuantity).to.be.a('number');",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(json.inventory.onHandQuantity - json.inventory.reservedQuantity);",
+                  "  pm.environment.set('inventory_test_product_id', json.id);",
+                  "  pm.environment.set('inventory_initial_on_hand', String(json.inventory.onHandQuantity));",
+                  "  pm.environment.set('inventory_initial_reserved', String(json.inventory.reservedQuantity));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{demo_inventory_product_slug}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{demo_inventory_product_slug}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 SUPER_ADMIN Inventory Read Smoke",
+      "item": [
+        {
+          "name": "SUPER_ADMIN - GET /api/admin/products/:productId/inventory should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Response includes tracked inventory summary', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('inventory_test_product_id'));",
+                  "  pm.expect(json.inventory).to.be.an('object');",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(json.inventory.onHandQuantity - json.inventory.reservedQuantity);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{super_admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 CATALOG_MANAGER Inventory Admin Flow",
+      "item": [
+        {
+          "name": "CATALOG_MANAGER - GET inventory should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Save reserved quantity before write flow', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.environment.set('inventory_reserved_before_flow', String(json.inventory.reservedQuantity));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - PUT inventory should set on-hand quantity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inventory set response is correct', function () {",
+                  "  const json = pm.response.json();",
+                  "  const reserved = Number(pm.environment.get('inventory_reserved_before_flow'));",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(30);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(reserved);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(30 - reserved);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"onHandQuantity\": 30,\n  \"note\": \"Postman inventory set\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - POST manual remove adjustment should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Manual remove updates on-hand quantity', function () {",
+                  "  const json = pm.response.json();",
+                  "  const reserved = Number(pm.environment.get('inventory_reserved_before_flow'));",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(27);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(reserved);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(27 - reserved);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/adjustments",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "adjustments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MANUAL_REMOVE\",\n  \"quantity\": 3,\n  \"note\": \"Postman remove adjustment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - POST manual add adjustment should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Manual add updates on-hand quantity', function () {",
+                  "  const json = pm.response.json();",
+                  "  const reserved = Number(pm.environment.get('inventory_reserved_before_flow'));",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(29);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(reserved);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(29 - reserved);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/adjustments",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "adjustments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MANUAL_ADD\",\n  \"quantity\": 2,\n  \"note\": \"Postman add adjustment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - GET inventory transactions should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has transaction items', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json.items.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/transactions",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - GET inventory reservations should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has reservation items array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/reservations",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "reservations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 ORDER_MANAGER Read 200 Write 403",
+      "item": [
+        {
+          "name": "ORDER_MANAGER - GET inventory should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - PUT inventory should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"onHandQuantity\": 31,\n  \"note\": \"Forbidden order manager set\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST adjustment should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/adjustments",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "adjustments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MANUAL_ADD\",\n  \"quantity\": 1,\n  \"note\": \"Forbidden order manager adjustment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 SUPPORT_STAFF Read 200 Write 403",
+      "item": [
+        {
+          "name": "SUPPORT_STAFF - GET inventory should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - PUT inventory should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"onHandQuantity\": 31,\n  \"note\": \"Forbidden support staff set\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - POST adjustment should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory/adjustments",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory",
+                "adjustments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MANUAL_ADD\",\n  \"quantity\": 1,\n  \"note\": \"Forbidden support staff adjustment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Cleanup Restore Fixture",
+      "item": [
+        {
+          "name": "CATALOG_MANAGER - restore inventory on-hand quantity to initial value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inventory restore response matches captured initial state', function () {",
+                  "  const json = pm.response.json();",
+                  "  const initialOnHand = Number(pm.environment.get('inventory_initial_on_hand'));",
+                  "  const initialReserved = Number(pm.environment.get('inventory_initial_reserved'));",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(initialOnHand);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(initialReserved);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(initialOnHand - initialReserved);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"onHandQuantity\": {{inventory_initial_on_hand}},\n  \"note\": \"Postman inventory restore\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER - GET inventory after restore should match initial state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Inventory after restore matches captured initial state', function () {",
+                  "  const json = pm.response.json();",
+                  "  const initialOnHand = Number(pm.environment.get('inventory_initial_on_hand'));",
+                  "  const initialReserved = Number(pm.environment.get('inventory_initial_reserved'));",
+                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(initialOnHand);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(initialReserved);",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(initialOnHand - initialReserved);",
+                  "  pm.environment.unset('inventory_test_product_id');",
+                  "  pm.environment.unset('inventory_initial_on_hand');",
+                  "  pm.environment.unset('inventory_initial_reserved');",
+                  "  pm.environment.unset('inventory_reserved_before_flow');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{inventory_test_product_id}}/inventory",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{inventory_test_product_id}}",
+                "inventory"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "Backend_URL",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "Demo_User_Password",
+      "value": "pass1234",
+      "type": "string"
+    },
+    {
+      "key": "super_admin_email",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "catalog_manager_email",
+      "value": "catalog.manager@example.com",
+      "type": "string"
+    },
+    {
+      "key": "order_manager_email",
+      "value": "order.manager@example.com",
+      "type": "string"
+    },
+    {
+      "key": "support_staff_email",
+      "value": "support.staff@example.com",
+      "type": "string"
+    },
+    {
+      "key": "demo_inventory_product_slug",
+      "value": "demo-wireless-headphones",
+      "type": "string"
+    }
+  ]
+}

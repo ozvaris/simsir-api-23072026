@@ -2,6 +2,7 @@
 
 import { Column, Entity, Index, OneToMany, OneToOne } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/base.entity';
+import { Order } from '../../orders/entities/order.entity';
 import { ProductReview } from '../../../modules/product-reviews/entities/product-review.entity';
 import { Cart } from '../../cart/entities/cart.entity';
 import { UserRole } from '../../rbac/entities/user-role.entity';
@@ -41,4 +42,7 @@ export class User extends AppBaseEntity {
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles!: UserRole[];
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders!: Order[];
 }

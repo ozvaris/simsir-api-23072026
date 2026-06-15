@@ -28,6 +28,7 @@ This document is not an architecture guide and is not an entity schema document.
 - [Addresses API](#addresses-api)
 - [Categories API](#categories-api)
 - [Products API](#products-api)
+- [Planned Inventory Admin API](#planned-inventory-admin-api)
 - [Cart API](#cart-api)
 - [Checkout Reference API](#checkout-reference-api)
 - [Orders API](#orders-api)
@@ -515,11 +516,55 @@ Purpose:
 Purpose:
 
 - list products under a category.
+- use the same inventory-aware public product list item shape as `GET /api/products`.
 
 Query params:
 
 - `page`
 - `limit`
+
+Response JSON:
+
+```json
+{
+  "category": {
+    "id": "cat_001",
+    "parentId": null,
+    "slug": "audio",
+    "name": "Audio",
+    "imgUrl": "/assets/superstore/category-audio.png",
+    "sortOrder": 1
+  },
+  "items": [
+    {
+      "id": "prd_001",
+      "slug": "iphone-13-pro-max",
+      "title": "iPhone 13 Pro Max",
+      "brandName": "Apple",
+      "categoryId": "cat_001",
+      "price": 1299,
+      "discount": 10,
+      "rating": 4.9,
+      "imgUrl": "/assets/superstore/iphone-13-pro-max.png",
+      "shortDescription": "Flagship smartphone",
+      "longDescription": "Detailed product description",
+      "status": "active",
+      "inventory": {
+        "isTracked": true,
+        "onHandQuantity": 24,
+        "reservedQuantity": 2,
+        "availableQuantity": 22
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalItems": 1,
+    "totalPages": 1
+  }
+}
+```
 
 ## Admin Categories API
 
@@ -614,7 +659,13 @@ Response JSON:
       "rating": 4.9,
       "imgUrl": "/assets/superstore/iphone-13-pro-max.png",
       "shortDescription": "Flagship smartphone",
-      "longDescription": "Detailed product description"
+      "longDescription": "Detailed product description",
+      "inventory": {
+        "isTracked": true,
+        "onHandQuantity": 24,
+        "reservedQuantity": 2,
+        "availableQuantity": 22
+      }
     }
   ],
   "pagination": {
@@ -632,6 +683,43 @@ Purpose:
 
 - fetch product detail;
 - include media and recommendation relations.
+
+Response JSON:
+
+```json
+{
+  "id": "prd_001",
+  "slug": "iphone-13-pro-max",
+  "title": "iPhone 13 Pro Max",
+  "brandName": "Apple",
+  "categoryId": "cat_001",
+  "price": 1299,
+  "discount": 10,
+  "rating": 4.9,
+  "imgUrl": "/assets/superstore/iphone-13-pro-max.png",
+  "shortDescription": "Flagship smartphone",
+  "longDescription": "Detailed product description",
+  "inventory": {
+    "isTracked": true,
+    "onHandQuantity": 24,
+    "reservedQuantity": 2,
+    "availableQuantity": 22
+  },
+  "media": [
+    {
+      "id": "media_001",
+      "productId": "prd_001",
+      "src": "/assets/superstore/iphone-13-pro-max.png",
+      "alt": "iPhone 13 Pro Max",
+      "sortOrder": 1
+    }
+  ],
+  "relations": {
+    "frequentlyBoughtTogether": [],
+    "relatedProducts": []
+  }
+}
+```
 
 ### `GET /api/products/:productId/reviews`
 
@@ -691,11 +779,71 @@ Query params:
 - `page`
 - `limit`
 
+Response JSON:
+
+```json
+{
+  "items": [
+    {
+      "id": "prd_001",
+      "slug": "iphone-13-pro-max",
+      "title": "iPhone 13 Pro Max",
+      "brandName": "Apple",
+      "categoryId": "cat_001",
+      "price": 1299,
+      "discount": 10,
+      "rating": 4.9,
+      "imgUrl": "/assets/superstore/iphone-13-pro-max.png",
+      "shortDescription": "Flagship smartphone",
+      "longDescription": "Detailed product description",
+      "status": "active",
+      "inventory": {
+        "isTracked": true,
+        "onHandQuantity": 24,
+        "reservedQuantity": 2,
+        "availableQuantity": 22
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalItems": 1,
+    "totalPages": 1
+  }
+}
+```
+
 ### `GET /api/admin/products/:productId`
 
 Purpose:
 
 - fetch product for admin management.
+
+Response JSON:
+
+```json
+{
+  "id": "prd_001",
+  "slug": "iphone-13-pro-max",
+  "title": "iPhone 13 Pro Max",
+  "brandName": "Apple",
+  "categoryId": "cat_001",
+  "price": 1299,
+  "discount": 10,
+  "rating": 4.9,
+  "imgUrl": "/assets/superstore/iphone-13-pro-max.png",
+  "shortDescription": "Flagship smartphone",
+  "longDescription": "Detailed product description",
+  "status": "active",
+  "inventory": {
+    "isTracked": true,
+    "onHandQuantity": 24,
+    "reservedQuantity": 2,
+    "availableQuantity": 22
+  }
+}
+```
 
 ### `POST /api/admin/products`
 
@@ -704,12 +852,62 @@ Purpose:
 - create product;
 - optional `status` defaults to `active`.
 
+Response JSON:
+
+```json
+{
+  "id": "prd_101",
+  "slug": "postman-test-product-1710000000000",
+  "title": "Postman Test Product",
+  "brandName": "Postman Brand",
+  "categoryId": "cat_001",
+  "price": 129.99,
+  "discount": 10,
+  "rating": 4.8,
+  "imgUrl": "/assets/superstore/postman-test-product.png",
+  "shortDescription": "Postman generated test product.",
+  "longDescription": "Created from admin product API.",
+  "status": "active",
+  "inventory": {
+    "isTracked": false,
+    "onHandQuantity": null,
+    "reservedQuantity": null,
+    "availableQuantity": null
+  }
+}
+```
+
 ### `PATCH /api/admin/products/:productId`
 
 Purpose:
 
 - update product fields;
 - update `status`.
+
+Response JSON:
+
+```json
+{
+  "id": "prd_101",
+  "slug": "postman-test-product-1710000000000",
+  "title": "Postman Test Product Updated",
+  "brandName": "Postman Brand",
+  "categoryId": "cat_001",
+  "price": 139.99,
+  "discount": 5,
+  "rating": 4.8,
+  "imgUrl": "/assets/superstore/postman-test-product.png",
+  "shortDescription": "Postman generated test product.",
+  "longDescription": "Created from admin product API.",
+  "status": "inactive",
+  "inventory": {
+    "isTracked": false,
+    "onHandQuantity": null,
+    "reservedQuantity": null,
+    "availableQuantity": null
+  }
+}
+```
 
 ### `DELETE /api/admin/products/:productId`
 
@@ -726,6 +924,188 @@ Rules:
 - reviews block delete with `409 Conflict`;
 - source or target product relations block delete with `409 Conflict`;
 - use `PATCH /api/admin/products/:productId` to change `status`.
+
+<a id="planned-inventory-admin-api"></a>
+
+## Planned Inventory Admin API
+
+Inventory management should stay separate from product catalog create/update payloads.
+
+Reason:
+
+- `Product` owns catalog data;
+- `InventoryItem` owns stock state;
+- `InventoryReservation` and `InventoryTransaction` own operational stock movement;
+- `reservedQuantity` must stay system-managed and must not be edited directly from ordinary product update requests.
+
+Because of that:
+
+- `POST /api/admin/products` should not accept stock fields;
+- `PATCH /api/admin/products/:productId` should not accept stock fields;
+- inventory should be managed through separate admin endpoints.
+
+Recommended initial endpoint set:
+
+### `GET /api/admin/products/:productId/inventory`
+
+Purpose:
+
+- fetch the current inventory state for one product.
+
+Response JSON:
+
+```json
+{
+  "productId": "prd_001",
+  "inventory": {
+    "isTracked": true,
+    "onHandQuantity": 24,
+    "reservedQuantity": 2,
+    "availableQuantity": 22
+  }
+}
+```
+
+### `PUT /api/admin/products/:productId/inventory`
+
+Purpose:
+
+- create the inventory record when it does not exist;
+- set the current on-hand quantity explicitly for initial setup or controlled correction.
+
+Request JSON:
+
+```json
+{
+  "onHandQuantity": 24,
+  "note": "Initial stock setup"
+}
+```
+
+Response JSON:
+
+```json
+{
+  "productId": "prd_001",
+  "inventory": {
+    "isTracked": true,
+    "onHandQuantity": 24,
+    "reservedQuantity": 0,
+    "availableQuantity": 24
+  }
+}
+```
+
+Rules:
+
+- create the `InventoryItem` if it does not exist;
+- update only `onHandQuantity`;
+- do not allow direct request-level editing of `reservedQuantity`.
+
+### `POST /api/admin/products/:productId/inventory/adjustments`
+
+Purpose:
+
+- apply a manual stock movement;
+- create an `InventoryTransaction` record.
+
+Request JSON:
+
+```json
+{
+  "type": "MANUAL_ADD",
+  "quantity": 5,
+  "note": "Warehouse recount correction"
+}
+```
+
+Alternative remove example:
+
+```json
+{
+  "type": "MANUAL_REMOVE",
+  "quantity": 2,
+  "note": "Damaged units removed"
+}
+```
+
+Response JSON:
+
+```json
+{
+  "success": true,
+  "productId": "prd_001",
+  "inventory": {
+    "isTracked": true,
+    "onHandQuantity": 29,
+    "reservedQuantity": 2,
+    "availableQuantity": 27
+  }
+}
+```
+
+Rules:
+
+- allow `MANUAL_ADD` and `MANUAL_REMOVE`;
+- reject adjustments that would make `onHandQuantity` negative;
+- write a matching `InventoryTransaction`;
+- keep `reservedQuantity` unchanged in manual adjustment flow unless a future dedicated operational flow explicitly changes reservations.
+
+### `GET /api/admin/products/:productId/inventory/transactions`
+
+Purpose:
+
+- list inventory transaction history for admin review.
+
+Response JSON:
+
+```json
+{
+  "items": [
+    {
+      "id": "inv_tx_001",
+      "inventoryItemId": "inv_001",
+      "reservationId": null,
+      "orderId": null,
+      "orderItemId": null,
+      "type": "MANUAL_ADD",
+      "quantity": 5,
+      "note": "Warehouse recount correction",
+      "createdAt": "2026-06-11T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+### `GET /api/admin/products/:productId/inventory/reservations`
+
+Purpose:
+
+- list active and historical reservations affecting the product.
+
+Response JSON:
+
+```json
+{
+  "items": [
+    {
+      "id": "inv_res_001",
+      "orderId": "ord_001",
+      "orderItemId": "ord_item_001",
+      "quantity": 2,
+      "status": "ACTIVE",
+      "expiresAt": "2026-06-12T12:00:00.000Z",
+      "note": "Reservation for DEMO-ORDER-1001"
+    }
+  ]
+}
+```
+
+Recommended boundary:
+
+- product admin endpoints manage descriptive catalog fields;
+- inventory admin endpoints manage stock setup and manual stock corrections;
+- order/checkout workflows manage reservation and commit lifecycle.
 
 ### `GET /api/admin/products/:productId/media`
 
@@ -926,13 +1306,57 @@ Purpose:
 
 Purpose:
 
-- list available shipping carriers.
+- list available shipping services for checkout.
+
+Response intent:
+
+- each item identifies the selectable shipping service;
+- carrier display fields remain available in the same item;
+- active service-level kapida capability data is included for UI display.
 
 ### `GET /api/payment-methods`
 
 Purpose:
 
 - list available payment methods.
+
+Query params:
+
+- `shippingServiceId` optional
+
+Behavior rules:
+
+- `credit_card` and `bank_transfer` are base payment methods;
+- base payment methods remain selectable when active;
+- `cash_on_delivery` and `card_on_delivery` are conditional payment methods;
+- conditional payment methods become selectable only when the selected shipping service has an active matching capability row;
+- when `shippingServiceId` is omitted, conditional methods may still be listed but should return as not selectable with a reason such as `shipping_service_required`.
+
+Response intent:
+
+- each item may include:
+  - `providers`
+  - `isBaseMethod`
+  - `isConditionalMethod`
+  - `isSelectable`
+  - `availabilityReason`
+  - `extraFee`
+  - `currency`
+  - `minOrderAmount`
+  - `maxOrderAmount`
+
+Provider response intent:
+
+- a payment method may include zero or more provider records;
+- provider records may include:
+  - `code`
+  - `name`
+  - `providerType`
+  - `description`
+  - `logoUrl`
+  - `sortOrder`
+  - `status`
+- public payment responses should include only active providers.
 
 ## Admin Shipping Carriers API
 
@@ -969,9 +1393,10 @@ Request JSON:
 
 ```json
 {
-  "code": "standard_shipping",
-  "name": "Standard Shipping",
-  "fee": 9.99,
+  "code": "aras_kargo",
+  "name": "Aras Kargo",
+  "description": "National cargo carrier",
+  "sortOrder": 10,
   "status": "active"
 }
 ```
@@ -986,8 +1411,9 @@ Request JSON:
 
 ```json
 {
-  "name": "Express Shipping",
-  "fee": 19.99
+  "name": "Aras Kargo",
+  "description": "Updated carrier description",
+  "sortOrder": 20
 }
 ```
 
@@ -1026,6 +1452,87 @@ Response JSON:
 }
 ```
 
+### `POST /api/admin/shipping-carriers/:shippingCarrierId/services`
+
+Purpose:
+
+- create a delivery service/option under an existing carrier.
+
+Request JSON:
+
+```json
+{
+  "code": "standard_delivery",
+  "name": "Standart Teslimat",
+  "price": 79,
+  "currency": "TRY",
+  "estimatedDeliveryText": "2-3 is gunu",
+  "sortOrder": 10,
+  "status": "active"
+}
+```
+
+### `PATCH /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId`
+
+Purpose:
+
+- update shipping carrier service fields.
+
+### `PATCH /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId/status`
+
+Purpose:
+
+- activate or deactivate a shipping carrier service.
+
+### `DELETE /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId`
+
+Purpose:
+
+- hard delete a shipping carrier service when it has no protected related records.
+
+### `POST /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId/payment-capabilities`
+
+Purpose:
+
+- attach a kapida payment capability to a shipping service.
+
+Request JSON:
+
+```json
+{
+  "paymentMethod": "cash_on_delivery",
+  "fee": 25,
+  "currency": "TRY",
+  "minOrderAmount": null,
+  "maxOrderAmount": null,
+  "sortOrder": 10,
+  "status": "active"
+}
+```
+
+Rules:
+
+- allowed `paymentMethod` values are only `cash_on_delivery` and `card_on_delivery`;
+- this capability layer must not be used for `credit_card` or `bank_transfer`.
+
+### `PATCH /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId/payment-capabilities/:shippingCarrierServicePaymentCapabilityId`
+
+Purpose:
+
+- update shipping service payment capability fields.
+
+### `PATCH /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId/payment-capabilities/:shippingCarrierServicePaymentCapabilityId/status`
+
+Purpose:
+
+- activate or deactivate a shipping service payment capability.
+
+### `DELETE /api/admin/shipping-carriers/:shippingCarrierId/services/:shippingCarrierServiceId/payment-capabilities/:shippingCarrierServicePaymentCapabilityId`
+
+Purpose:
+
+- hard delete a shipping service payment capability.
+
 ## Admin Payment Methods API
 
 Admin payment method endpoints require payment method permissions.
@@ -1062,7 +1569,7 @@ Request JSON:
 ```json
 {
   "code": "credit_card",
-  "name": "Credit Card",
+  "name": "Kredi / Banka Karti",
   "status": "active"
 }
 ```
@@ -1077,7 +1584,7 @@ Request JSON:
 
 ```json
 {
-  "name": "Credit Card"
+  "name": "Kredi / Banka Karti"
 }
 ```
 
@@ -1116,9 +1623,67 @@ Response JSON:
 }
 ```
 
+### `POST /api/admin/payment-methods/:paymentMethodId/providers`
+
+Purpose:
+
+- create a provider/channel under an existing payment method.
+
+Request JSON:
+
+```json
+{
+  "code": "iyzico",
+  "name": "iyzico",
+  "providerType": "PSP",
+  "description": "Kart odeme saglayicisi",
+  "sortOrder": 20,
+  "status": "active"
+}
+```
+
+Rules:
+
+- provider `code` must be unique within the same payment method;
+- `providerType` should be one of `PSP`, `BANK_POS`, or `AGGREGATOR`.
+
+### `PATCH /api/admin/payment-methods/:paymentMethodId/providers/:paymentProviderId`
+
+Purpose:
+
+- update payment provider fields.
+
+### `PATCH /api/admin/payment-methods/:paymentMethodId/providers/:paymentProviderId/status`
+
+Purpose:
+
+- activate or deactivate a payment provider without deleting the payment method itself.
+
+### `DELETE /api/admin/payment-methods/:paymentMethodId/providers/:paymentProviderId`
+
+Purpose:
+
+- hard delete a payment provider when it has no protected related records.
+
+## Order-Time Validation Notes
+
+Order creation is not defined in this section yet, but the payment eligibility rule must be enforced again during order creation.
+
+Required rule:
+
+- if selected payment method is `credit_card` or `bank_transfer`, active payment method validation is enough;
+- if selected payment method is `cash_on_delivery` or `card_on_delivery`, backend must also verify that the selected `shippingServiceId` has an active matching payment capability;
+- backend must not trust frontend filtering alone.
+
 <a id="orders-api"></a>
 
 ## Orders API
+
+Current implementation note:
+
+- the project now has phase-1 order and inventory entities plus demo seed support;
+- customer or admin order endpoints are not implemented yet in runtime code;
+- this section remains the target contract for the next workflow phase, not a fully available API surface today.
 
 ### `POST /api/orders`
 

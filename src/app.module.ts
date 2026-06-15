@@ -14,6 +14,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { UsersModule } from './modules/users/users.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentMethodsModule } from './modules/payment-methods/payment-methods.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
@@ -55,6 +56,7 @@ import { ShippingCarriersModule } from './modules/shipping-carriers/shipping-car
     ShippingCarriersModule,
     PaymentMethodsModule,
     CheckoutModule,
+    InventoryModule,
     OrdersModule,
     AddressesModule,
     CategoriesModule,

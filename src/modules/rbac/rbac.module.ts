@@ -17,6 +17,8 @@ import { RbacQueryService } from './services/rbac-query.service';
 import { RbacSeedService } from './services/rbac-seed.service';
 import { RoleService } from './services/role.service';
 import { UserRoleService } from './services/user-role.service';
+import { UserCredential } from '../users/entities/user-credential.entity';
+import { DemoUsersSeedService } from './seed/demo-users-seed.service';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { UserRoleService } from './services/user-role.service';
       Permission,
       UserRole,
       RolePermission,
+      UserCredential,
     ]),
   ],
   controllers: [RolesController, PermissionsController, UserRolesController],
@@ -39,6 +42,7 @@ import { UserRoleService } from './services/user-role.service';
     UserRoleService,
     RbacQueryService,
     RbacSeedService,
+    DemoUsersSeedService,
   ],
   exports: [
     TypeOrmModule,

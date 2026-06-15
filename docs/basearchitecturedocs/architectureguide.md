@@ -484,7 +484,7 @@ Entity documents should not become service implementation guides.
 
 Module pattern documents may use concrete examples but should explain the pattern rather than create hidden standards.
 
-Markdown links must follow `markdown-link-protocol.md`.
+Markdown links must follow `../mainprotocols/markdown-link-protocol.md`.
 
 For VS Code compatibility:
 
@@ -495,6 +495,14 @@ For VS Code compatibility:
 <a id="development-flow-protocol"></a>
 
 ## Development Flow Protocol
+
+Reference and pre-order flows should stabilize their eligibility rules before order creation is implemented.
+
+Example:
+
+- a public reference endpoint may list all active payment methods;
+- a shipping-aware reference endpoint may mark some methods as conditional or unavailable;
+- order creation must re-check the same eligibility rule on the backend and must not trust the client-selected combination by itself.
 
 Recommended backend development flow:
 

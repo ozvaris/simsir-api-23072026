@@ -2,10 +2,11 @@
 
 import {
   IsEnum,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -22,9 +23,20 @@ export class CreateShippingCarrierDto {
   @MaxLength(160)
   name!: string;
 
-  @IsNumber()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string | null;
+
+  @IsOptional()
+  @IsUrl()
+  @MaxLength(500)
+  logoUrl?: string | null;
+
+  @IsOptional()
+  @IsInt()
   @Min(0)
-  fee!: number;
+  sortOrder?: number;
 
   @IsOptional()
   @IsEnum(RecordStatus)

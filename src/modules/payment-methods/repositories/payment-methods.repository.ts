@@ -21,10 +21,46 @@ export class PaymentMethodsRepository {
     });
   }
 
+  findActivePublic(): Promise<PaymentMethod[]> {
+    return this.paymentMethodRepository
+      .createQueryBuilder('paymentMethod')
+      .leftJoinAndSelect(
+        'paymentMethod.providers',
+        'paymentProvider',
+        'paymentProvider.status = :providerStatus',
+        { providerStatus: RecordStatus.ACTIVE },
+      )
+      .where('paymentMethod.status = :paymentMethodStatus', {
+        paymentMethodStatus: RecordStatus.ACTIVE,
+      })
+      .orderBy('paymentMethod.code', 'ASC')
+      .addOrderBy('paymentProvider.sortOrder', 'ASC')
+      .addOrderBy('paymentProvider.code', 'ASC')
+      .getMany();
+  }
+
   findById(paymentMethodId: string): Promise<PaymentMethod | null> {
     return this.paymentMethodRepository.findOne({
       where: { id: paymentMethodId },
+      relations: {
+        providers: true,
+      },
     });
+  }
+
+  findByIdWithActiveProviders(
+    paymentMethodId: string,
+  ): Promise<PaymentMethod | null> {
+    return this.paymentMethodRepository
+      .createQueryBuilder('paymentMethod')
+      .leftJoinAndSelect(
+        'paymentMethod.providers',
+        'paymentProvider',
+        'paymentProvider.status = :status',
+        { status: RecordStatus.ACTIVE },
+      )
+      .where('paymentMethod.id = :paymentMethodId', { paymentMethodId })
+      .getOne();
   }
 
   findByCode(code: string): Promise<PaymentMethod | null> {

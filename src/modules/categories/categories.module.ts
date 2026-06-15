@@ -7,11 +7,12 @@ import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { Category } from './entities/category.entity';
 import { CategoriesRepository } from './repositories/categories.repository';
+import { DemoCategoriesSeedService } from './seed/demo-categories-seed.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Category])],
   controllers: [CategoriesController, CategoriesAdminController],
-  providers: [CategoriesService, CategoriesRepository],
+  providers: [CategoriesService, CategoriesRepository, DemoCategoriesSeedService],
   exports: [CategoriesService, CategoriesRepository, TypeOrmModule],
 })
 export class CategoriesModule {}

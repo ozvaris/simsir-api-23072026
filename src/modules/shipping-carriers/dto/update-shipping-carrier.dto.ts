@@ -1,10 +1,11 @@
 // src/modules/shipping-carriers/dto/update-shipping-carrier.dto.ts
 
 import {
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -17,7 +18,17 @@ export class UpdateShippingCarrierDto {
   name?: string;
 
   @IsOptional()
-  @IsNumber()
+  @IsString()
+  @MaxLength(500)
+  description?: string | null;
+
+  @IsOptional()
+  @IsUrl()
+  @MaxLength(500)
+  logoUrl?: string | null;
+
+  @IsOptional()
+  @IsInt()
   @Min(0)
-  fee?: number;
+  sortOrder?: number;
 }

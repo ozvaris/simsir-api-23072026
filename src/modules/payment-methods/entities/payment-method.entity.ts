@@ -1,8 +1,9 @@
 // src/modules/payment-methods/entities/payment-method.entity.ts
 
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/base.entity';
 import { RecordStatus } from '../../../common/enums/record-status.enum';
+import { PaymentProvider } from './payment-provider.entity';
 
 @Entity('payment_methods')
 export class PaymentMethod extends AppBaseEntity {
@@ -20,4 +21,10 @@ export class PaymentMethod extends AppBaseEntity {
     default: RecordStatus.ACTIVE,
   })
   status!: RecordStatus;
+
+  @OneToMany(
+    () => PaymentProvider,
+    (paymentProvider) => paymentProvider.paymentMethod,
+  )
+  providers!: PaymentProvider[];
 }

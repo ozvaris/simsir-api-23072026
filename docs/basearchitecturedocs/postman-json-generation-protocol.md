@@ -1,162 +1,201 @@
 # Postman JSON Generation Protocol
 
-<a id="purpose"></a>
-
 ## Purpose
 
-This document defines how Postman importable JSON collections should be generated for this backend project.
+This document defines how Postman collections and environment files should be maintained for this backend project.
 
-The goal is to speed up manual API testing by generating ready-to-import `.postman_collection.json` files and optional `.zip` bundles that match the project's environment-variable based Postman workflow.
+The goal is to keep Postman artifacts:
 
-This protocol is especially useful for:
-
-- public endpoint checks;
-- authenticated user-owned endpoint checks;
-- admin/RBAC endpoint checks;
-- CRUD flow tests;
-- active/inactive visibility tests;
-- role-based access matrix tests;
-- repeated regression checks after Codex changes.
-
-<a id="contents"></a>
-
-## Contents
-
-- [Purpose](#purpose)
-- [Core Rule](#core-rule)
-- [When To Generate Postman JSON](#when-to-generate-postman-json)
-- [Output Formats](#output-formats)
-- [Single Collection With Folders Rule](#single-collection-with-folders-rule)
-- [Zip Bundle Rule](#zip-bundle-rule)
-- [Postman Environment Variables](#postman-environment-variables)
-- [Collection Naming](#collection-naming)
-- [Folder Naming](#folder-naming)
-- [Request Naming](#request-naming)
-- [URL Rules](#url-rules)
-- [Authorization Rules](#authorization-rules)
-- [Status Code Test Rules](#status-code-test-rules)
-- [Response Shape Test Rules](#response-shape-test-rules)
-- [Variable Capture Rules](#variable-capture-rules)
-- [Body Rules](#body-rules)
-- [CRUD Flow Rules](#crud-flow-rules)
-- [RBAC Role Test Rules](#rbac-role-test-rules)
-- [Public/Admin Visibility Rules](#public-admin-visibility-rules)
-- [README Rule](#readme-rule)
-- [Fast Generation Method](#fast-generation-method)
-- [Generator Helper Design](#generator-helper-design)
-- [Generation Checklist](#generation-checklist)
-- [Recommended Handoff Format](#recommended-handoff-format)
-
-<a id="core-rule"></a>
+- importable;
+- modular;
+- flat in filesystem layout;
+- easy to run in a predictable order;
+- synchronized with shared environment usage.
 
 ## Core Rule
 
-When the user asks for a Postman test artifact, generate an importable file instead of only pasting raw JSON.
+When the user asks for a Postman artifact, generate or update an importable `.postman_collection.json` file instead of only pasting raw JSON.
 
-Preferred outputs:
+For this project:
 
-```txt
-single-purpose.postman_collection.json
-```
+- each module or scenario should have its own separate collection JSON file;
+- collection files should live directly under `postman/`;
+- avoid per-collection folders unless the user explicitly requests a special structure;
+- avoid auxiliary `README.txt` files for collection usage notes;
+- usage notes should live in markdown docs under `docs/`.
 
-or:
+## Filesystem Layout Rule
 
-```txt
-single-collection-with-folders.zip
-```
+Use a flat `postman/` layout.
 
-For multi-scenario tests, the zip should usually contain one collection file with folders, not many separate collection files.
-
-<a id="when-to-generate-postman-json"></a>
-
-## When To Generate Postman JSON
-
-Generate Postman JSON when the user asks for:
-
-- "Postman json";
-- "Postman import file";
-- "zip file";
-- "sürükle bırak import";
-- endpoint tests;
-- RBAC role tests;
-- CRUD tests;
-- regression tests;
-- public/admin behavior tests.
-
-Do not generate Postman JSON when the user only asks for a conceptual explanation.
-
-<a id="output-formats"></a>
-
-## Output Formats
-
-### Single request or small scenario
-
-Use one file:
+Preferred structure:
 
 ```txt
-payment-methods-public-200.postman_collection.json
+postman/
+  01-user-role-token-setup.postman_collection.json
+  02-category-product-role-tests.postman_collection.json
+  03-cart-endpoint-tests.postman_collection.json
+  04-checkout-reference-role-tests.postman_collection.json
+  05-inventory-admin-tests.postman_collection.json
+  06-product-media-submodule-tests.postman_collection.json
+  07-product-relations-submodule-tests.postman_collection.json
+  08-product-reviews-submodule-tests.postman_collection.json
+  simsir-local.postman_environment.json
 ```
 
-### Multi-step or role-based scenario
+Do not default to:
 
-Use one zip containing one collection and a README:
+- `postman/<collection-name>/...`
+- zip bundles
+- README sidecar files
+
+unless the user explicitly asks for them.
+
+## Shared Environment Rule
+
+When multiple collections target the same local backend context, prefer one shared environment instead of creating a separate environment per collection.
+
+Current project-level shared local environment:
 
 ```txt
-category-product-role-tests-single-collection.zip
-  category-product-role-tests.postman_collection.json
-  README.txt
+Simsir - Local
 ```
 
-Avoid this for multi-step flows:
+Environment file:
 
 ```txt
-01-step-one.postman_collection.json
-02-step-two.postman_collection.json
-03-step-three.postman_collection.json
+postman/simsir-local.postman_environment.json
 ```
 
-Because Postman imports them as separate collections, which makes the user's workflow harder.
+Use a separate environment only when the execution context is meaningfully different, such as:
 
-<a id="single-collection-with-folders-rule"></a>
+- local vs staging;
+- different backend base URL;
+- different tenant or dataset;
+- different secrets that should not live in the common local workflow.
 
-## Single Collection With Folders Rule
+For ordinary collection additions inside the same local backend workflow:
 
-For multi-scenario tests, create one collection and place each scenario under folders.
+- reuse `Simsir - Local`;
+- add new variables there when needed;
+- do not create a collection-specific environment by default.
+
+## Setup Collection Dependency Rule
+
+If a collection depends on:
+
+- bearer tokens;
+- role assignment results;
+- generated user ids;
+- temporary ids created by an earlier setup flow;
+
+then document and preserve that dependency explicitly.
+
+Current project rule:
+
+- `01-user-role-token-setup.postman_collection.json` is the setup collection;
+- downstream RBAC-aware collections should run after it;
+- Newman runs should use the exported generated environment file produced by that setup step.
+
+Preferred Newman pattern:
+
+```bash
+newman run postman/04-checkout-reference-role-tests.postman_collection.json \
+  -e postman/simsir-local.newman-runtime.postman_environment.json \
+  --export-environment postman/simsir-local.newman-runtime.postman_environment.json \
+  --reporters cli,json \
+  --reporter-json-export postman/reports/04-checkout-reference-role-tests-report.json \
+  2>&1 | tee postman/reports/04-checkout-reference-role-tests-output.txt
+```
+
+This produces both:
+
+- a machine-readable JSON report under `postman/reports/`
+- a plain-text CLI output log under `postman/reports/`
+
+## Collection Naming Rule
+
+Every collection display name should use:
+
+```txt
+Simsir - XX <Domain Name>
+```
+
+Examples:
+
+```txt
+Simsir - 01 User Role Token Setup
+Simsir - 02 Category Product Role Tests
+Simsir - 03 Cart Endpoint Tests
+Simsir - 04 Checkout Reference Role Tests
+Simsir - 05 Inventory Admin Tests
+```
+
+Rules:
+
+- `XX` should match the project-level run order;
+- use two digits;
+- keep the domain name stable and descriptive;
+- do not use `V2`, `V3`, or similar version suffixes in collection names.
+
+If the collection changes, update the same file and same display name instead of creating a versioned duplicate.
+
+## Collection Filename Rule
+
+File names should also reflect run order and domain:
+
+```txt
+01-user-role-token-setup.postman_collection.json
+02-category-product-role-tests.postman_collection.json
+03-cart-endpoint-tests.postman_collection.json
+```
+
+Rules:
+
+- lowercase;
+- hyphen-separated;
+- numbered to match run order;
+- one file per module or scenario;
+- no version suffixes such as `-v2`, `-v3`, or `-final`.
+
+## Modular Collection Rule
+
+Keep collections modular.
+
+Do not merge unrelated workflows into one mega collection unless the user explicitly asks for that.
+
+Preferred model:
+
+- one collection for RBAC token setup;
+- one collection for category/product role tests;
+- one collection for cart;
+- one collection for checkout reference flows;
+- one collection for inventory admin;
+- one collection per product submodule test area;
+- future order runtime should also become its own collection.
+
+Reason:
+
+- files stay smaller;
+- updates stay localized;
+- run-order dependencies remain easier to understand;
+- review and maintenance become simpler.
+
+## Folder Rule Inside A Collection
+
+Inside a collection, use numbered folders when execution order matters.
 
 Example:
 
 ```txt
-Simsir - Category Product Role Tests
-  01 Public Category Product
-  02 CUSTOMER Access - Admin Catalog Should Be 403
-  03 SUPER_ADMIN Access - Admin Catalog Read Should Be 200
-  04 CATALOG_MANAGER Category Product CRUD + Active Inactive Behavior
-  05 ORDER_MANAGER Access - Catalog Admin Should Be 403
-  06 SUPPORT_STAFF Read 200 Write 403
+01 Public Checks
+02 CUSTOMER Access
+03 SUPER_ADMIN Access
+04 Manager CRUD
+05 Negative Role Checks
 ```
 
-Postman collection shape:
-
-```txt
-collection.item[]
-  folder.item[]
-    request
-```
-
-<a id="zip-bundle-rule"></a>
-
-## Zip Bundle Rule
-
-A zip bundle should contain:
-
-```txt
-<collection-name>.postman_collection.json
-README.txt
-```
-
-The zip should not contain multiple collections unless the user explicitly asks for separate collections.
-
-<a id="postman-environment-variables"></a>
+Collections may still be multi-folder internally even though the filesystem layout is flat.
 
 ## Postman Environment Variables
 
@@ -171,7 +210,6 @@ Base URL:
 Common token variables:
 
 ```txt
-{{access_token}}
 {{customer_access_token}}
 {{super_admin_access_token}}
 {{catalog_manager_access_token}}
@@ -179,79 +217,90 @@ Common token variables:
 {{support_staff_access_token}}
 ```
 
+Common auth/bootstrap variables:
+
+```txt
+{{Demo_User_Password}}
+{{Bootstrap_Super_Admin_Password}}
+{{super_admin_email}}
+{{catalog_manager_email}}
+{{order_manager_email}}
+{{support_staff_email}}
+```
+
 Common generated id variables:
+
+```txt
+{{customer_user_id}}
+{{order_manager_user_id}}
+{{support_staff_user_id}}
+```
+
+Collection-owned temporary variables should use collection-specific names rather than generic names when they are not intended to be shared across the full suite.
+
+Preferred examples:
+
+```txt
+{{categoryProductRoleTestCategoryId}}
+{{categoryProductRoleTestCategorySlug}}
+{{categoryProductRoleTestProductId}}
+{{categoryProductRoleTestProductSlug}}
+```
+
+Avoid introducing new generic names such as:
 
 ```txt
 {{test_category_id}}
 {{test_category_slug}}
 {{test_product_id}}
 {{test_product_slug}}
-{{test_shipping_carrier_id}}
-{{test_payment_method_id}}
-{{customer_user_id}}
-{{order_manager_user_id}}
-{{support_staff_user_id}}
 ```
+
+unless they are intentionally shared across multiple collections.
+
+When a collection creates temporary records and later hard-deletes them, unset the collection-owned temporary variables before the collection ends so they do not pollute exported generated environment files.
 
 Do not hardcode real tokens.
 
-<a id="collection-naming"></a>
+## URL Rule
 
-## Collection Naming
+Always use `{{Backend_URL}}`.
 
-Collection name should be clear and domain-specific.
-
-Examples:
+Correct:
 
 ```txt
-Simsir - Checkout Reference Role Tests
-Simsir - Category Product Role Tests
-Simsir - User Role Token Setup
-Simsir - Cart Endpoint Tests
+{{Backend_URL}}/api/categories
 ```
 
-File name should be lowercase and descriptive:
+Wrong:
 
 ```txt
-checkout-reference-role-tests.postman_collection.json
-category-product-role-tests.postman_collection.json
-user-role-token-setup.postman_collection.json
+http://localhost:4000/api/categories
 ```
 
-<a id="folder-naming"></a>
+## Authorization Rule
 
-## Folder Naming
+### Public endpoint
 
-Folders should be numbered to preserve execution order:
+Use `noauth`.
+
+### Authenticated endpoint
+
+Use bearer token variables.
+
+### Role-specific endpoint
+
+Use the matching role token:
 
 ```txt
-01 Public Checks
-02 CUSTOMER Access
-03 SUPER_ADMIN Access
-04 Domain Manager CRUD
-05 Negative Role Checks
+CUSTOMER         -> {{customer_access_token}}
+SUPER_ADMIN      -> {{super_admin_access_token}}
+CATALOG_MANAGER  -> {{catalog_manager_access_token}}
+ORDER_MANAGER    -> {{order_manager_access_token}}
+SUPPORT_STAFF    -> {{support_staff_access_token}}
 ```
 
-For workflows that depend on previous variables, folder order matters.
-
-Example:
-
-```txt
-04 CATALOG_MANAGER Category Product CRUD
-```
-
-may create:
-
-```txt
-test_category_id
-test_product_id
-```
-
-Later folders may reuse those ids.
-
-<a id="request-naming"></a>
-
-## Request Naming
+## Request Naming Rule
 
 Request names should include:
 
@@ -268,502 +317,170 @@ CATALOG_MANAGER - POST /api/admin/products should return 200 or 201
 SUPPORT_STAFF - PATCH /api/admin/products/:id should return 403
 ```
 
-<a id="url-rules"></a>
-
-## URL Rules
-
-Always use `{{Backend_URL}}`.
-
-Correct:
-
-```txt
-{{Backend_URL}}/api/categories
-```
-
-Wrong:
-
-```txt
-http://localhost:3000/api/categories
-```
-
-Postman URL object should include:
-
-```json
-{
-  "raw": "{{Backend_URL}}/api/categories",
-  "host": ["{{Backend_URL}}"],
-  "path": ["api", "categories"]
-}
-```
-
-For query params, prefer Postman `query` array:
-
-```json
-"query": [
-  { "key": "status", "value": "inactive" }
-]
-```
-
-<a id="authorization-rules"></a>
-
-## Authorization Rules
-
-### Public endpoint
-
-Use `noauth`.
-
-```json
-{
-  "type": "noauth"
-}
-```
-
-### Authenticated endpoint
-
-Use bearer token variable.
-
-```json
-{
-  "type": "bearer",
-  "bearer": [
-    {
-      "key": "token",
-      "value": "{{customer_access_token}}",
-      "type": "string"
-    }
-  ]
-}
-```
-
-### Role-specific endpoint
-
-Use the matching role token:
-
-```txt
-CUSTOMER         -> {{customer_access_token}}
-SUPER_ADMIN      -> {{super_admin_access_token}}
-CATALOG_MANAGER  -> {{catalog_manager_access_token}}
-ORDER_MANAGER    -> {{order_manager_access_token}}
-SUPPORT_STAFF    -> {{support_staff_access_token}}
-```
-
-<a id="status-code-test-rules"></a>
-
-## Status Code Test Rules
+## Status Code Test Rule
 
 Every request should assert the expected status code.
 
-### 200
+Common cases:
 
-```js
-pm.test('Status code is 200', function () {
-  pm.response.to.have.status(200);
-});
-```
+- `200`
+- `200 or 201`
+- `401`
+- `403`
+- `404`
 
-### 200 or 201
+Create endpoints may accept `200` or `201` when backend behavior may vary.
 
-Use for create endpoints when NestJS may return `201 Created`.
+## Response Shape Rule
 
-```js
-pm.test('Status code is 200 or 201', function () {
-  pm.expect([200, 201]).to.include(pm.response.code);
-});
-```
-
-### 401
-
-```js
-pm.test('Status code is 401', function () {
-  pm.response.to.have.status(401);
-});
-```
-
-### 403
-
-```js
-pm.test('Status code is 403', function () {
-  pm.response.to.have.status(403);
-});
-```
-
-### 404
-
-```js
-pm.test('Status code is 404', function () {
-  pm.response.to.have.status(404);
-});
-```
-
-<a id="response-shape-test-rules"></a>
-
-## Response Shape Test Rules
-
-### JSON response
-
-```js
-pm.test('Response is JSON', function () {
-  pm.response.to.be.json;
-});
-```
-
-### List response
-
-```js
-pm.test('Response has items array', function () {
-  const json = pm.response.json();
-  pm.expect(json).to.have.property('items');
-  pm.expect(json.items).to.be.an('array');
-});
-```
-
-### Operation result
-
-```js
-pm.test('Response has success true', function () {
-  const json = pm.response.json();
-  pm.expect(json).to.have.property('success', true);
-});
-```
-
-<a id="variable-capture-rules"></a>
-
-## Variable Capture Rules
-
-When a create request returns an id, save it to the Postman environment.
-
-Example:
-
-```js
-const json = pm.response.json();
-pm.environment.set('test_category_id', json.id);
-pm.environment.set('test_category_slug', json.slug);
-```
-
-If response shape may be wrapped, use a safe helper:
-
-```js
-const json = pm.response.json();
-const entity = json.data || json.item || json;
-if (entity.id) pm.environment.set('test_category_id', entity.id);
-if (entity.slug) pm.environment.set('test_category_slug', entity.slug);
-```
-
-For login responses:
-
-```js
-const json = pm.response.json();
-if (json.accessToken) {
-  pm.environment.set('customer_access_token', json.accessToken);
-}
-if (json.user && json.user.id) {
-  pm.environment.set('customer_user_id', json.user.id);
-}
-```
-
-<a id="body-rules"></a>
-
-## Body Rules
-
-Use raw JSON body for POST and PATCH.
-
-Example:
-
-```json
-{
-  "mode": "raw",
-  "raw": "{\n  \"name\": \"Test Category\",\n  \"slug\": \"test-category-{{$timestamp}}\",\n  \"status\": \"active\"\n}",
-  "options": {
-    "raw": {
-      "language": "json"
-    }
-  }
-}
-```
-
-Use dynamic values to avoid duplicate conflicts:
-
-```txt
-{{$timestamp}}
-```
+Collections should verify meaningful response shape, not just status code.
 
 Examples:
 
-```txt
-postman-category-{{$timestamp}}
-postman-product-{{$timestamp}}
-test_shipping_{{$timestamp}}
-test_payment_{{$timestamp}}
-```
+- `items` array checks for list endpoints;
+- `success: true` checks for operation endpoints;
+- required id/slug/code presence checks for create/detail endpoints;
+- inventory summary checks for inventory-aware product responses.
 
-<a id="crud-flow-rules"></a>
+## Variable Capture Rule
 
-## CRUD Flow Rules
+When a request returns an id, slug, code, or token needed later, save it into the active environment.
 
-A CRUD folder should test the full lifecycle in order:
+Examples:
+
+- created category ids/slugs;
+- created product ids/slugs;
+- role user ids;
+- access tokens;
+- created shipping/payment reference ids;
+- captured seeded demo product ids.
+
+Later requests in the same collection may depend on these variables.
+
+## CRUD Flow Rule
+
+A CRUD folder should test the lifecycle in order:
 
 1. create;
 2. list/read;
 3. detail;
 4. update;
-5. status update when the resource supports active/inactive visibility;
-6. delete hard-delete attempt;
-7. verify public visibility after status update;
-8. verify admin visibility after status update.
+5. status update when supported;
+6. delete hard-delete attempt or expected business error;
+7. public/admin visibility follow-up when applicable.
 
 Delete and deactivate must not be treated as the same operation.
 
-Expected behavior:
+## RBAC Role Test Rule
+
+A role-based collection should verify both positive and negative access.
+
+Typical pattern:
+
+- customer denied admin endpoint;
+- elevated role allowed expected domain action;
+- unrelated role denied write actions;
+- support role may read if explicitly allowed, but should still fail write paths when not granted.
+
+## Documentation Rule
+
+Collection usage guidance should live in markdown docs, not in sidecar `README.txt` files.
+
+Use docs for:
+
+- required environment;
+- project-level run order;
+- reset and rerun workflow;
+- seed assumptions;
+- cross-collection dependencies.
+
+Current project-level run-order document:
 
 ```txt
-PATCH /api/admin/products/:id
-  -> may update ordinary product fields
-
-PATCH /api/admin/products/:id/status
-  -> status = inactive
-
-DELETE /api/admin/products/:id
-  -> hard-delete attempt or business error
+docs/basearchitecturedocs/postman-run-order-guide.md
 ```
 
-For resources using active/inactive visibility, do not use `DELETE` to change visibility.
+## Postman Change Propagation Rule
 
-Expected behavior:
+When a Postman collection is added or updated, the surrounding Postman artifacts must also be reviewed.
 
-```txt
-PATCH /api/admin/products/:id/status
-  -> status = inactive
+At minimum, check whether the change requires updates in:
 
-GET /api/products
-  -> inactive product does not appear
+1. `postman/simsir-local.postman_environment.json`
+2. `docs/basearchitecturedocs/postman-run-order-guide.md`
+3. collection display name numbering
+4. collection filename numbering
+5. role token setup collection
+6. any upstream collection that creates prerequisite variables or records
 
-GET /api/admin/products?status=inactive
-  -> inactive product appears
-```
+### Shared environment update triggers
 
-<a id="rbac-role-test-rules"></a>
+Update `postman/simsir-local.postman_environment.json` when:
 
-## RBAC Role Test Rules
+- a collection introduces a new required environment variable;
+- a new common token, email, password, slug, or reusable id variable is introduced;
+- a collection stops needing a variable and cleanup is appropriate.
 
-A role-based test collection should verify both positive and negative access.
+### Run order update triggers
 
-Example for catalog:
+Update `docs/basearchitecturedocs/postman-run-order-guide.md` when:
 
-```txt
-CUSTOMER
-  admin catalog endpoint -> 403
+- a new collection is added;
+- a collection now depends on variables created by another collection;
+- a collection must move earlier or later in the recommended sequence.
 
-SUPER_ADMIN
-  admin catalog read -> 200
+### Naming update triggers
 
-CATALOG_MANAGER
-  admin catalog CRUD -> 200 or 201
+Review collection display names and filenames when:
 
-ORDER_MANAGER
-  admin catalog endpoint -> 403
+- a new collection is inserted in the run order;
+- the project-level ordering changes;
+- an old versioned name such as `V2` or `V3` still exists.
 
-SUPPORT_STAFF
-  read -> 200 if read permission exists
-  write -> 403
-```
+### Token setup review triggers
 
-Example for checkout reference:
+Review the user-role token setup collection when:
 
-```txt
-CUSTOMER
-  admin shipping/payment endpoint -> 403
-
-ORDER_MANAGER
-  shipping/payment CRUD -> 200 or 201
-
-SUPPORT_STAFF
-  read -> 200
-  create/update/delete -> 403
-```
-
-<a id="public-admin-visibility-rules"></a>
-
-## Public/Admin Visibility Rules
-
-Public endpoints are storefront/customer-facing endpoints.
-
-They should generally return only active/visible records.
-
-Examples:
-
-```txt
-GET /api/categories
-GET /api/products
-GET /api/shipping-carriers
-GET /api/payment-methods
-```
-
-Admin endpoints are management endpoints.
-
-They may return active and inactive records and may support status filters.
-
-Examples:
-
-```txt
-GET /api/admin/categories?status=inactive
-GET /api/admin/products?status=inactive
-GET /api/admin/shipping-carriers?status=inactive
-GET /api/admin/payment-methods?status=inactive
-```
-
-When a domain has `status`, generated Postman tests should verify:
-
-- active records appear in public lists;
-- inactive records do not appear in public lists;
-- inactive records appear in admin inactive list;
-- status update uses PATCH, not DELETE;
-- delete is tested as hard-delete attempt or expected business error.
-
-<a id="readme-rule"></a>
-
-## README Rule
-
-Every zip bundle should contain `README.txt`.
-
-The README should include:
-
-- what the collection tests;
-- required environment variables;
-- recommended run order;
-- generated variables;
-- known assumptions.
-
-Example:
-
-```txt
-Required environment variables:
-
-Backend_URL
-customer_access_token
-super_admin_access_token
-catalog_manager_access_token
-order_manager_access_token
-support_staff_access_token
-```
-
-<a id="fast-generation-method"></a>
-
-## Fast Generation Method
-
-The fastest repeatable method is to generate the collection JSON with a small script rather than writing Postman JSON by hand.
-
-Recommended process:
-
-1. Define a small helper for auth blocks.
-2. Define a small helper for URL objects.
-3. Define a small helper for status test scripts.
-4. Define a request factory.
-5. Define folders as arrays of request objects.
-6. Write one `.postman_collection.json` file.
-7. Add a `README.txt`.
-8. Zip both files.
-
-This avoids copy/paste mistakes and keeps large role-based test collections consistent.
-
-<a id="generator-helper-design"></a>
-
-## Generator Helper Design
-
-A generator script may use this conceptual helper structure.
-
-### Auth helpers
-
-```txt
-noAuth()
-bearer('{{super_admin_access_token}}')
-bearer('{{catalog_manager_access_token}}')
-```
-
-### URL helper
-
-```txt
-url('/api/categories')
-url('/api/admin/products', { status: 'inactive' })
-```
-
-### Test helpers
-
-```txt
-expectStatus(200)
-expectStatusOneOf([200, 201])
-expectItemsArray()
-expectSuccessTrue()
-saveEnvFromJson('test_product_id', 'id')
-```
-
-### Request helper
-
-```txt
-request({
-  name,
-  method,
-  path,
-  auth,
-  body,
-  tests,
-})
-```
-
-### Folder helper
-
-```txt
-folder('01 Public Checks', [request1, request2])
-```
-
-A generator script should output valid Postman Collection v2.1 JSON:
-
-```txt
-https://schema.getpostman.com/json/collection/v2.1.0/collection.json
-```
-
-<a id="generation-checklist"></a>
+- a new role token becomes part of the regular workflow;
+- login response handling changes;
+- bootstrap password or shared auth assumptions change.
 
 ## Generation Checklist
 
-Before handing off a generated Postman artifact, verify:
+Before handing off a generated or updated Postman artifact, verify:
 
 1. It uses Postman Collection v2.1 schema.
-2. It uses one collection with folders for multi-step flows.
-3. It uses `{{Backend_URL}}`.
-4. It does not hardcode real tokens.
-5. Public requests use `noauth`.
-6. Role requests use the correct role token variable.
-7. POST/PATCH bodies are raw JSON.
-8. Create tests accept `200` or `201` when appropriate.
-9. Forbidden tests assert `403`.
-10. Unauthorized tests assert `401`.
-11. List tests check `items` array when applicable.
-12. Create requests save ids/slugs/codes to environment variables when needed.
-13. Later requests reuse saved variables.
-14. README exists inside zip.
-15. Zip contains one collection JSON file and README unless otherwise requested.
-
-<a id="recommended-handoff-format"></a>
+2. It remains modular and does not merge unrelated scenarios by default.
+3. It lives directly under `postman/`.
+4. It uses `{{Backend_URL}}`.
+5. It does not hardcode real tokens.
+6. Public requests use `noauth`.
+7. Role requests use the correct role token variable.
+8. POST/PATCH bodies are raw JSON when needed.
+9. Create tests accept `200` or `201` when appropriate.
+10. Forbidden tests assert `403`.
+11. Unauthorized tests assert `401`.
+12. Later requests reuse captured variables correctly.
+13. Shared environment impact was reviewed.
+14. Run-order document impact was reviewed.
+15. Collection display name and filename numbering are still correct.
+16. No unnecessary `V2`/`V3` duplication remains.
 
 ## Recommended Handoff Format
 
-When handing off the generated file, keep the response short.
+When handing off updated Postman artifacts, keep the response short and point to the actual JSON files and relevant docs.
 
 Example:
 
 ```md
-Hazırladım. Postman'a zip olarak sürükleyip import edebilirsin:
+Hazırladım.
 
-[category-product-role-tests-single-collection.zip](sandbox:/mnt/data/category-product-role-tests-single-collection.zip)
+- [01-user-role-token-setup.postman_collection.json](...)
+- [02-category-product-role-tests.postman_collection.json](...)
 
-Gerekli environment değişkenleri:
+Run order:
+- [postman-run-order-guide.md](./postman-run-order-guide.md)
 
-```txt
-Backend_URL
-customer_access_token
-super_admin_access_token
-catalog_manager_access_token
-order_manager_access_token
-support_staff_access_token
-```
+Shared environment:
+- [simsir-local.postman_environment.json](...)
 ```

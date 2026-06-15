@@ -17,13 +17,26 @@ export class ShippingCarriersRepository {
   findActive(): Promise<ShippingCarrier[]> {
     return this.shippingCarrierRepository.find({
       where: { status: RecordStatus.ACTIVE },
-      order: { code: 'ASC' },
+      order: { sortOrder: 'ASC', code: 'ASC' },
     });
   }
 
   findById(shippingCarrierId: string): Promise<ShippingCarrier | null> {
     return this.shippingCarrierRepository.findOne({
       where: { id: shippingCarrierId },
+    });
+  }
+
+  findByIdWithRelations(
+    shippingCarrierId: string,
+  ): Promise<ShippingCarrier | null> {
+    return this.shippingCarrierRepository.findOne({
+      where: { id: shippingCarrierId },
+      relations: {
+        services: {
+          paymentCapabilities: true,
+        },
+      },
     });
   }
 
@@ -53,7 +66,8 @@ export class ShippingCarriersRepository {
 
     const builder = this.shippingCarrierRepository
       .createQueryBuilder('shippingCarrier')
-      .orderBy('shippingCarrier.code', 'ASC')
+      .orderBy('shippingCarrier.sortOrder', 'ASC')
+      .addOrderBy('shippingCarrier.code', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

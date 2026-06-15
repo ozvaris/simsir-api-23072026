@@ -1,0 +1,583 @@
+{
+  "info": {
+    "name": "Simsir - 07 Product Relations Submodule Tests",
+    "_postman_id": "c614665b-4a85-473a-a045-956f47ba9171",
+    "description": "ProductRelations submodule regression tests including V2 admin list/detail endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Prerequisite - Capture Two Active Products",
+      "item": [
+        {
+          "name": "GET /api/products?limit=2 - capture source and target products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('At least two active products exist', function () { pm.expect(items.length).to.be.above(1); });",
+                  "if (items.length > 1) {",
+                  "  pm.environment.set('productRelationsSubmoduleTestSourceProductId', items[0].id);",
+                  "  pm.environment.set('productRelationsSubmoduleTestTargetProductId', items[1].id);",
+                  "  pm.environment.set('productRelationsSubmoduleTestSourceProductSlug', items[0].slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products?limit=2",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products?limit=2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Product Detail Still Loads Relation Shape",
+      "item": [
+        {
+          "name": "GET /api/products/:slug - product detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Product detail includes relations shape', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.slug).to.eql(pm.environment.get('productRelationsSubmoduleTestSourceProductSlug'));",
+                  "  pm.expect(json.relations).to.be.an('object');",
+                  "  pm.expect(json.relations.frequentlyBoughtTogether).to.be.an('array');",
+                  "  pm.expect(json.relations.relatedProducts).to.be.an('array');",
+                  "  json.relations.frequentlyBoughtTogether.forEach(function (item) {",
+                  "    pm.expect(item.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.slug).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.title).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "  json.relations.relatedProducts.forEach(function (item) {",
+                  "    pm.expect(item.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.slug).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.title).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products/{{productRelationsSubmoduleTestSourceProductSlug}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productRelationsSubmoduleTestSourceProductSlug}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 CATALOG_MANAGER Product Relation Admin Create + Read",
+      "item": [
+        {
+          "name": "GET /api/admin/products/:productId/relations - admin list should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Response has relation item shape', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  json.items.forEach(function (item) {",
+                  "    pm.expect(item.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.sourceProductId).to.eql(pm.environment.get('productRelationsSubmoduleTestSourceProductId'));",
+                  "    pm.expect(item.targetProductId).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.relationType).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productRelationsSubmoduleTestSourceProductId}}/relations",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productRelationsSubmoduleTestSourceProductId}}",
+                "relations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/products/:productId/relations - create relation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('productRelationsSubmoduleTestRelationId', json.id); }",
+                  "pm.test('Created relation response is correct', function () {",
+                  "  pm.expect(pm.environment.get('productRelationsSubmoduleTestRelationId')).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('productRelationsSubmoduleTestRelationId'));",
+                  "  pm.expect(json.sourceProductId).to.eql(pm.environment.get('productRelationsSubmoduleTestSourceProductId'));",
+                  "  pm.expect(json.targetProductId).to.eql(pm.environment.get('productRelationsSubmoduleTestTargetProductId'));",
+                  "  pm.expect(json.relationType).to.eql('related_product');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productRelationsSubmoduleTestSourceProductId}}/relations",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productRelationsSubmoduleTestSourceProductId}}",
+                "relations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetProductId\": \"{{productRelationsSubmoduleTestTargetProductId}}\",\n  \"relationType\": \"related_product\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/relations/:relationId - admin detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Admin detail returns created relation', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('productRelationsSubmoduleTestRelationId'));",
+                  "  pm.expect(json.sourceProductId).to.eql(pm.environment.get('productRelationsSubmoduleTestSourceProductId'));",
+                  "  pm.expect(json.targetProductId).to.eql(pm.environment.get('productRelationsSubmoduleTestTargetProductId'));",
+                  "  pm.expect(json.relationType).to.eql('related_product');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/relations/{{productRelationsSubmoduleTestRelationId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "relations",
+                "{{productRelationsSubmoduleTestRelationId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 CUSTOMER Cannot Access Product Relation Admin Endpoints",
+      "item": [
+        {
+          "name": "CUSTOMER GET /api/admin/products/:productId/relations should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productRelationsSubmoduleTestSourceProductId}}/relations",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productRelationsSubmoduleTestSourceProductId}}",
+                "relations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER GET /api/admin/products/relations/:relationId should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/relations/{{productRelationsSubmoduleTestRelationId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "relations",
+                "{{productRelationsSubmoduleTestRelationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER POST /api/admin/products/:productId/relations should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/{{productRelationsSubmoduleTestSourceProductId}}/relations",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{productRelationsSubmoduleTestSourceProductId}}",
+                "relations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetProductId\": \"{{productRelationsSubmoduleTestTargetProductId}}\",\n  \"relationType\": \"related_product\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Cleanup Delete Relation And Unset Temp Variables",
+      "item": [
+        {
+          "name": "DELETE /api/admin/products/relations/:relationId - delete relation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/relations/{{productRelationsSubmoduleTestRelationId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "relations",
+                "{{productRelationsSubmoduleTestRelationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CATALOG_MANAGER GET /api/admin/products/relations/:relationId should return 404 after delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Deleted relation is absent', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(String(json.message || '')).to.not.equal('');",
+                  "});",
+                  "pm.environment.unset('productRelationsSubmoduleTestSourceProductId');",
+                  "pm.environment.unset('productRelationsSubmoduleTestSourceProductSlug');",
+                  "pm.environment.unset('productRelationsSubmoduleTestTargetProductId');",
+                  "pm.environment.unset('productRelationsSubmoduleTestRelationId');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/products/relations/{{productRelationsSubmoduleTestRelationId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "relations",
+                "{{productRelationsSubmoduleTestRelationId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

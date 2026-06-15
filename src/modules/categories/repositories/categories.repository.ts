@@ -8,6 +8,10 @@ import { Product } from '../../products/entities/product.entity';
 import { ListCategoriesQueryDto } from '../dto/list-categories-query.dto';
 import { Category } from '../entities/category.entity';
 
+type CategoryProductLoadOptions = {
+  includeInventorySummary?: boolean;
+};
+
 @Injectable()
 export class CategoriesRepository {
   constructor(
@@ -111,14 +115,21 @@ export class CategoriesRepository {
     });
   }
 
-  findPublicBySlugWithProducts(slug: string): Promise<Category | null> {
+  findPublicBySlugWithProducts(
+    slug: string,
+    options: CategoryProductLoadOptions = {},
+  ): Promise<Category | null> {
     return this.categoryRepository.findOne({
       where: {
         slug,
         status: RecordStatus.ACTIVE,
       },
       relations: {
-        products: true,
+        products: options.includeInventorySummary
+          ? {
+              inventoryItems: true,
+            }
+          : true,
       },
     });
   }

@@ -69,7 +69,16 @@ It does not define controller, service, DTO, response, or API endpoint behavior.
 
 - `Order`
 - `OrderItem`
-- `OrderAddressSnapshot`
+- `OrderAddress`
+- `OrderPaymentSnapshot`
+- `OrderShipmentSnapshot`
+- `OrderStatusHistory`
+
+### Inventory
+
+- `InventoryItem`
+- `InventoryReservation`
+- `InventoryTransaction`
 
 <a id="identity-entities"></a>
 
@@ -316,6 +325,9 @@ Notes:
 
 - `active` products are visible in the public catalog.
 - `inactive` products remain manageable in admin flows but are hidden from public catalog endpoints.
+- stock quantity does not live on `Product` in the current model.
+- stock is owned by `InventoryItem` and related inventory records.
+- product response contracts may expose an inventory summary derived from the related inventory item.
 - Product delete is a hard delete attempt and is blocked when related cart items, media, reviews, or product relations exist.
 
 ### `ProductMedia`
@@ -415,14 +427,16 @@ Properties:
 
 ### `ShippingCarrier`
 
-Carrier option used when shipping-company flow is selected.
+Carrier/company record used by checkout shipping selection.
 
 Properties:
 
 - `id`
 - `code`
 - `name`
-- `fee`
+- `description`
+- `logoUrl`
+- `sortOrder`
 - `status`
 
 Notes:
@@ -430,6 +444,56 @@ Notes:
 - `active` shipping carriers are visible in public checkout reference endpoints.
 - `inactive` shipping carriers remain manageable in admin flows but are hidden from public checkout reference endpoints.
 - Shipping carrier delete is a hard delete attempt and is blocked when related records exist.
+
+### `ShippingCarrierService`
+
+Selectable delivery service/option under a carrier.
+
+Properties:
+
+- `id`
+- `shippingCarrierId`
+- `code`
+- `name`
+- `description`
+- `price`
+- `currency`
+- `estimatedDeliveryText`
+- `sortOrder`
+- `status`
+
+Notes:
+
+- checkout shipping selection identifies the service, not only the carrier;
+- public shipping endpoints return active services under active carriers;
+- service price belongs here instead of the carrier root.
+
+### `ShippingCarrierServicePaymentCapability`
+
+Kapida payment capability attached to a shipping service.
+
+Properties:
+
+- `id`
+- `shippingCarrierServiceId`
+- `paymentMethod`
+- `fee`
+- `currency`
+- `minOrderAmount`
+- `maxOrderAmount`
+- `sortOrder`
+- `status`
+
+Allowed `paymentMethod` values:
+
+- `cash_on_delivery`
+- `card_on_delivery`
+
+Notes:
+
+- this table is only for shipping-enabled kapida collection methods;
+- `credit_card` and `bank_transfer` do not belong here;
+- active capability rows decide whether a selected shipping service enables a conditional payment method.
 
 ### `PaymentMethod`
 
@@ -447,6 +511,40 @@ Notes:
 - `active` payment methods are visible in public checkout reference endpoints.
 - `inactive` payment methods remain manageable in admin flows but are hidden from public checkout reference endpoints.
 - Payment method delete is a hard delete attempt and is blocked when related records exist.
+- `credit_card` and `bank_transfer` are base payment methods;
+- `cash_on_delivery` and `card_on_delivery` are conditional payment methods;
+- conditional payment method eligibility depends on the selected `ShippingCarrierService` capability list.
+
+### `PaymentProvider`
+
+Provider/channel option under a payment method.
+
+Properties:
+
+- `id`
+- `paymentMethodId`
+- `code`
+- `name`
+- `providerType`
+- `description`
+- `logoUrl`
+- `sortOrder`
+- `status`
+
+Allowed `providerType` values:
+
+- `PSP`
+- `BANK_POS`
+- `AGGREGATOR`
+
+Notes:
+
+- `PaymentProvider` is the second level under `PaymentMethod`;
+- a provider may represent a PSP, a direct bank virtual POS, or an aggregator;
+- `credit_card` commonly has multiple providers such as PayTR, iyzico, PayU, direct bank POS records, or aggregator records;
+- `bank_transfer` may also expose one or more provider-like account/channel records when the application wants to distinguish bank/account choices;
+- `cash_on_delivery` and `card_on_delivery` may have zero providers in phase 1;
+- provider activation does not replace payment method activation; both layers may matter.
 
 <a id="order-entities"></a>
 
@@ -454,18 +552,26 @@ Notes:
 
 ### `Order`
 
-Confirmed order root entity.
+Order root entity for business, payment, and fulfillment state.
 
 Properties:
 
 - `id`
-- `userId`
-- `shippingOption`
-- `shippingCarrierId`
-- `paymentMethodId`
 - `orderNumber`
-- `placedAt`
-- `totalValue`
+- `userId`
+- `orderStatus`
+- `paymentStatus`
+- `fulfillmentStatus`
+- `currency`
+- `subtotal`
+- `discountTotal`
+- `shippingFee`
+- `grandTotal`
+- `paymentMethodId`
+- `paymentProviderId`
+- `shippingCarrierId`
+- `shippingCarrierServiceId`
+- `notes`
 
 ### `OrderItem`
 
@@ -476,15 +582,17 @@ Properties:
 - `id`
 - `orderId`
 - `productId`
-- `title`
 - `quantity`
 - `unitPrice`
-- `originalUnitPrice`
-- `linePrice`
-- `imageSrc`
-- `imageAlt`
+- `discountAmount`
+- `lineSubtotal`
+- `lineTotal`
+- `productTitleSnapshot`
+- `productSlugSnapshot`
+- `brandNameSnapshot`
+- `productImageSnapshot`
 
-### `OrderAddressSnapshot`
+### `OrderAddress`
 
 Shipping or billing address captured at order time.
 
@@ -492,22 +600,141 @@ Properties:
 
 - `id`
 - `orderId`
-- `role`
+- `addressRole`
+- `label`
 - `fullName`
-- `email`
 - `phone`
-- `company`
 - `country`
-- `state`
 - `city`
+- `state`
 - `zip`
-- `address1`
-- `address2`
+- `addressLine1`
+- `addressLine2`
 
-Recommended `role` values:
+Recommended `addressRole` values:
 
 - `shipping`
 - `billing`
+
+### `OrderPaymentSnapshot`
+
+Snapshot of payment choice at order time.
+
+Properties:
+
+- `id`
+- `orderId`
+- `paymentMethodId`
+- `paymentMethodCodeSnapshot`
+- `paymentMethodNameSnapshot`
+- `paymentProviderId`
+- `paymentProviderCodeSnapshot`
+- `paymentProviderNameSnapshot`
+- `paymentProviderTypeSnapshot`
+- `providerConfigSnapshot`
+
+### `OrderShipmentSnapshot`
+
+Snapshot of shipment choice at order time.
+
+Properties:
+
+- `id`
+- `orderId`
+- `shippingOption`
+- `shippingCarrierId`
+- `shippingCarrierCodeSnapshot`
+- `shippingCarrierNameSnapshot`
+- `shippingCarrierServiceId`
+- `shippingCarrierServiceCodeSnapshot`
+- `shippingCarrierServiceNameSnapshot`
+- `estimatedDeliveryText`
+- `trackingNumber`
+- `shipmentPrice`
+- `currency`
+
+### `OrderStatusHistory`
+
+Append-only order status transition history.
+
+Properties:
+
+- `id`
+- `orderId`
+- `statusType`
+- `fromValue`
+- `toValue`
+- `note`
+
+Supported `statusType` values:
+
+- `ORDER`
+- `PAYMENT`
+- `FULFILLMENT`
+
+### `InventoryItem`
+
+Current stock state for a product.
+
+Properties:
+
+- `id`
+- `productId`
+- `onHandQuantity`
+- `reservedQuantity`
+
+Notes:
+
+- should be managed by dedicated inventory admin endpoints, not product create/update DTOs;
+- `onHandQuantity` may be set or adjusted by admin inventory operations;
+- `reservedQuantity` is system-managed and should move through reservation workflow, not direct catalog editing.
+
+### `InventoryReservation`
+
+Reservation row that blocks quantity for an order or order item.
+
+Properties:
+
+- `id`
+- `inventoryItemId`
+- `orderId`
+- `orderItemId`
+- `quantity`
+- `status`
+- `expiresAt`
+- `note`
+
+Supported `status` values:
+
+- `ACTIVE`
+- `COMMITTED`
+- `RELEASED`
+- `EXPIRED`
+
+### `InventoryTransaction`
+
+Inventory movement log row.
+
+Properties:
+
+- `id`
+- `inventoryItemId`
+- `reservationId`
+- `orderId`
+- `orderItemId`
+- `type`
+- `quantity`
+- `note`
+
+Supported `type` values:
+
+- `RESERVE`
+- `COMMIT`
+- `RELEASE`
+- `RESTORE`
+- `MANUAL_ADD`
+- `MANUAL_REMOVE`
+- `RETURN_RESTOCK`
 
 <a id="relationship-map"></a>
 
@@ -535,6 +762,7 @@ Recommended `role` values:
 - `Product 1 - N ProductMedia`
 - `Product 1 - N ProductReview`
 - `Product 1 - N CartItem`
+- `Product 1 - 1 InventoryItem` in the current phase-1 inventory model
 - `Product 1 - N OrderItem`
 - `Product 1 - N ProductRelation` as source product
 - `Product 1 - N ProductRelation` as target product
@@ -546,13 +774,29 @@ Recommended `role` values:
 
 ### Checkout Reference Side
 
-- `ShippingCarrier 1 - N Order`
+- `ShippingCarrier 1 - N ShippingCarrierService`
+- `ShippingCarrierService 1 - N ShippingCarrierServicePaymentCapability`
+- `PaymentMethod 1 - N PaymentProvider`
 - `PaymentMethod 1 - N Order`
 
 ### Order Side
 
 - `Order 1 - N OrderItem`
-- `Order 1 - N OrderAddressSnapshot`
+- `Order 1 - N OrderAddress`
+- `Order 1 - N OrderStatusHistory`
+- `Order 1 - 1 OrderPaymentSnapshot`
+- `Order 1 - 1 OrderShipmentSnapshot`
+
+### Inventory Side
+
+- `InventoryItem N - 1 Product`
+- `InventoryItem 1 - N InventoryReservation`
+- `InventoryItem 1 - N InventoryTransaction`
+- `InventoryReservation N - 1 Order`
+- `InventoryReservation N - 1 OrderItem`
+- `InventoryReservation 1 - N InventoryTransaction`
+- `InventoryTransaction N - 1 Order`
+- `InventoryTransaction N - 1 OrderItem`
 
 <a id="minimal-phase-1-set"></a>
 
@@ -575,9 +819,18 @@ Start with:
 - `Cart`
 - `CartItem`
 - `ShippingCarrier`
+- `ShippingCarrierService`
+- `ShippingCarrierServicePaymentCapability`
 - `PaymentMethod`
+- `PaymentProvider`
 - `Order`
 - `OrderItem`
-- `OrderAddressSnapshot`
+- `OrderAddress`
+- `OrderPaymentSnapshot`
+- `OrderShipmentSnapshot`
+- `OrderStatusHistory`
+- `InventoryItem`
+- `InventoryReservation`
+- `InventoryTransaction`
 
 Tenant-specific access-control entities are not part of the minimal set unless the product becomes multi-store, marketplace-based, or organization-based.

@@ -12,6 +12,7 @@ import { AppBaseEntity } from '../../../common/entities/base.entity';
 import { RecordStatus } from '../../../common/enums/record-status.enum';
 import { CartItem } from '../../cart/entities/cart-item.entity';
 import { Category } from '../../categories/entities/category.entity';
+import { InventoryItem } from '../../inventory/entities/inventory-item.entity';
 import { ProductMedia } from '../../product-media/entities/product-media.entity';
 import { ProductRelation } from '../../product-relations/entities/product-relation.entity';
 import { ProductReview } from '../../product-reviews/entities/product-review.entity';
@@ -78,4 +79,7 @@ export class Product extends AppBaseEntity {
 
   @OneToMany(() => ProductRelation, (relation) => relation.targetProduct)
   targetRelations!: ProductRelation[];
+
+  @OneToMany(() => InventoryItem, (inventoryItem) => inventoryItem.product)
+  inventoryItems!: InventoryItem[];
 }

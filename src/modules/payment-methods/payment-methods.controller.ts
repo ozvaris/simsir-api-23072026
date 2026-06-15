@@ -1,7 +1,8 @@
 // src/modules/payment-methods/payment-methods.controller.ts
 
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
+import { ListPublicPaymentMethodsQueryDto } from './dto/list-public-payment-methods-query.dto';
 import { PaymentMethodsService } from './payment-methods.service';
 
 @Controller('payment-methods')
@@ -10,7 +11,7 @@ export class PaymentMethodsController {
 
   @Get()
   @Public()
-  listPaymentMethods() {
-    return this.paymentMethodsService.listPublic();
+  listPaymentMethods(@Query() query: ListPublicPaymentMethodsQueryDto) {
+    return this.paymentMethodsService.listPublic(query);
   }
 }

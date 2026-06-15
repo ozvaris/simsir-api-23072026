@@ -3,6 +3,18 @@
 /node_modules
 /build
 
+# Newman / Postman local test outputs
+postman/reports/*
+!postman/reports/.gitkeep
+
+# Newman exported runtime environments - may contain real tokens
+postman/*.newman-runtime.postman_environment.json
+postman/*.generated.postman_environment.json
+postman/*runtime*.postman_environment.json
+
+# Accidental backup/temporary generated env files
+postman/*.postman_environment.jsonclear
+
 # Logs
 logs
 *.log

@@ -1,11 +1,6 @@
 // src/modules/payment-methods/dto/update-payment-method.dto.ts
 
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdatePaymentMethodDto {
   @IsOptional()

@@ -37,6 +37,8 @@ export const RBAC_SEED_PERMISSIONS = [
   'catalog.product.create',
   'catalog.product.update',
   'catalog.product.delete',
+  'inventory.read',
+  'inventory.update',
   'catalog.review.moderate',
   'order.read_all',
   'order.update_status',
@@ -88,13 +90,15 @@ export const RBAC_SEED_PERMISSIONS = [
 export const RBAC_SEED_ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: RBAC_SEED_PERMISSIONS.map((permission) => permission.code),
   CATALOG_MANAGER: RBAC_SEED_PERMISSIONS.filter((permission) =>
-    permission.code.startsWith('catalog.'),
+    permission.code.startsWith('catalog.') ||
+    permission.code.startsWith('inventory.'),
   ).map((permission) => permission.code),
   ORDER_MANAGER: RBAC_SEED_PERMISSIONS.filter(
     (permission) =>
       permission.code.startsWith('order.') ||
       permission.code.startsWith('shipping_carrier.') ||
-      permission.code.startsWith('payment_method.'),
+      permission.code.startsWith('payment_method.') ||
+      permission.code === 'inventory.read',
   ).map((permission) => permission.code),
   SUPPORT_STAFF: [
     'user.read',
@@ -103,6 +107,7 @@ export const RBAC_SEED_ROLE_PERMISSIONS: Record<string, string[]> = {
     'catalog.category.read',
     'shipping_carrier.read',
     'payment_method.read',
+    'inventory.read',
   ],
   CUSTOMER: [],
 };

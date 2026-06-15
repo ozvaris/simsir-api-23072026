@@ -3,32 +3,10 @@
 import { mapProductMedia } from '../../product-media/mappers/product-media.mapper';
 import { ProductRelation } from '../../product-relations/entities/product-relation.entity';
 import { ProductRelationType } from '../../product-relations/enums/product-relation-type.enum';
+import { mapProductListItem } from '../../../common/mappers/product-list-item.mapper';
 import { Product } from '../entities/product.entity';
 
-function toNumber(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0;
-  }
-
-  return Number(value);
-}
-
-export function mapProductListItem(product: Product) {
-  return {
-    id: product.id,
-    slug: product.slug,
-    title: product.title,
-    brandName: product.brandName,
-    categoryId: product.categoryId,
-    price: toNumber(product.price),
-    discount: toNumber(product.discount),
-    rating: toNumber(product.rating),
-    imgUrl: product.imgUrl,
-    shortDescription: product.shortDescription,
-    longDescription: product.longDescription,
-    status: product.status,
-  };
-}
+export { mapProductListItem };
 
 function mapRelationProduct(relation: ProductRelation) {
   return {

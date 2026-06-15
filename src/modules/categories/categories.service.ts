@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
+import { mapProductListItem } from '../../common/mappers/product-list-item.mapper';
 import { RecordStatus } from '../../common/enums/record-status.enum';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
@@ -267,8 +268,12 @@ export class CategoriesService {
     slug: string,
     query: CategoryProductsQueryDto,
   ): Promise<CategoryProductsResponse> {
-    const category =
-      await this.categoriesRepository.findPublicBySlugWithProducts(slug);
+    const category = await this.categoriesRepository.findPublicBySlugWithProducts(
+      slug,
+      {
+        includeInventorySummary: true,
+      },
+    );
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -304,18 +309,7 @@ export class CategoriesService {
 
   private toCategoryProductResponse(product: Product): CategoryProductResponse {
     return new CategoryProductResponse({
-      id: product.id,
-      slug: product.slug,
-      title: product.title,
-      brandName: product.brandName,
-      categoryId: product.categoryId,
-      price: Number(product.price),
-      discount: Number(product.discount),
-      rating: Number(product.rating),
-      imgUrl: product.imgUrl,
-      shortDescription: product.shortDescription,
-      longDescription: product.longDescription,
-      status: product.status,
+      ...mapProductListItem(product),
     });
   }
 }

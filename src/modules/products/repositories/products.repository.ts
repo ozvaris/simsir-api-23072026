@@ -13,6 +13,10 @@ import { ListAdminProductsQueryDto } from '../dto/list-admin-products-query.dto'
 import { ListProductsQueryDto } from '../dto/list-products-query.dto';
 import { Product } from '../entities/product.entity';
 
+type ProductInventoryLoadOptions = {
+  includeInventorySummary?: boolean;
+};
+
 @Injectable()
 export class ProductsRepository {
   constructor(
@@ -31,6 +35,7 @@ export class ProductsRepository {
 
   async findProducts(
     query: ListProductsQueryDto,
+    options: ProductInventoryLoadOptions = {},
   ): Promise<[Product[], number]> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -46,6 +51,10 @@ export class ProductsRepository {
       .orderBy('product.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
+
+    if (options.includeInventorySummary) {
+      qb.leftJoinAndSelect('product.inventoryItems', 'inventoryItems');
+    }
 
     if (query.categorySlug) {
       qb.andWhere('category.slug = :categorySlug', {
@@ -64,6 +73,7 @@ export class ProductsRepository {
 
   async findProductsForAdmin(
     query: ListAdminProductsQueryDto,
+    options: ProductInventoryLoadOptions = {},
   ): Promise<[Product[], number]> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -75,6 +85,10 @@ export class ProductsRepository {
       .orderBy('product.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
+
+    if (options.includeInventorySummary) {
+      qb.leftJoinAndSelect('product.inventoryItems', 'inventoryItems');
+    }
 
     if (query.categorySlug) {
       qb.andWhere('category.slug = :categorySlug', {
@@ -97,26 +111,45 @@ export class ProductsRepository {
     return qb.getManyAndCount();
   }
 
-  findProductById(productId: string): Promise<Product | null> {
+  findProductById(
+    productId: string,
+    options: ProductInventoryLoadOptions = {},
+  ): Promise<Product | null> {
     return this.productRepository.findOne({
       where: { id: productId },
+      relations: options.includeInventorySummary
+        ? {
+            inventoryItems: true,
+          }
+        : undefined,
     });
   }
 
-  findPublicProductById(productId: string): Promise<Product | null> {
-    return this.productRepository
+  findPublicProductById(
+    productId: string,
+    options: ProductInventoryLoadOptions = {},
+  ): Promise<Product | null> {
+    const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoin('product.category', 'category')
       .where('product.id = :productId', { productId })
       .andWhere('product.status = :status', { status: RecordStatus.ACTIVE })
       .andWhere('category.status = :categoryStatus', {
         categoryStatus: RecordStatus.ACTIVE,
-      })
-      .getOne();
+      });
+
+    if (options.includeInventorySummary) {
+      qb.leftJoinAndSelect('product.inventoryItems', 'inventoryItems');
+    }
+
+    return qb.getOne();
   }
 
-  findProductBySlug(slug: string): Promise<Product | null> {
-    return this.productRepository
+  findProductBySlug(
+    slug: string,
+    options: ProductInventoryLoadOptions = {},
+  ): Promise<Product | null> {
+    const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.media', 'media')
@@ -131,8 +164,13 @@ export class ProductsRepository {
       .andWhere('product.status = :status', { status: RecordStatus.ACTIVE })
       .andWhere('category.status = :categoryStatus', {
         categoryStatus: RecordStatus.ACTIVE,
-      })
-      .getOne();
+      });
+
+    if (options.includeInventorySummary) {
+      qb.leftJoinAndSelect('product.inventoryItems', 'inventoryItems');
+    }
+
+    return qb.getOne();
   }
 
   findProductBySlugPlain(slug: string): Promise<Product | null> {

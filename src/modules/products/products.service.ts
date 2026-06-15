@@ -6,15 +6,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
+import { mapProductListItem } from '../../common/mappers/product-list-item.mapper';
 import { RecordStatus } from '../../common/enums/record-status.enum';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListAdminProductsQueryDto } from './dto/list-admin-products-query.dto';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import {
-  mapProductDetail,
-  mapProductListItem,
-} from './mappers/products.mapper';
+import { mapProductDetail } from './mappers/products.mapper';
 import { ProductsRepository } from './repositories/products.repository';
 
 @Injectable()
@@ -26,7 +24,9 @@ export class ProductsService {
     const limit = query.limit ?? 20;
 
     const [products, totalItems] =
-      await this.productsRepository.findProducts(query);
+      await this.productsRepository.findProducts(query, {
+        includeInventorySummary: true,
+      });
 
     return {
       items: products.map(mapProductListItem),
@@ -44,7 +44,9 @@ export class ProductsService {
     const limit = query.limit ?? 20;
 
     const [products, totalItems] =
-      await this.productsRepository.findProductsForAdmin(query);
+      await this.productsRepository.findProductsForAdmin(query, {
+        includeInventorySummary: true,
+      });
 
     return {
       items: products.map(mapProductListItem),
@@ -58,7 +60,9 @@ export class ProductsService {
   }
 
   async getProductDetail(slug: string) {
-    const product = await this.productsRepository.findProductBySlug(slug);
+    const product = await this.productsRepository.findProductBySlug(slug, {
+      includeInventorySummary: true,
+    });
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -68,7 +72,9 @@ export class ProductsService {
   }
 
   async getProductForAdmin(productId: string) {
-    const product = await this.productsRepository.findProductById(productId);
+    const product = await this.productsRepository.findProductById(productId, {
+      includeInventorySummary: true,
+    });
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -111,11 +117,13 @@ export class ProductsService {
 
     const savedProduct = await this.productsRepository.saveProduct(product);
 
-    return mapProductListItem(savedProduct);
+    return this.getProductForAdmin(savedProduct.id);
   }
 
   async updateProduct(productId: string, dto: UpdateProductDto) {
-    const product = await this.productsRepository.findProductById(productId);
+    const product = await this.productsRepository.findProductById(productId, {
+      includeInventorySummary: true,
+    });
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -184,7 +192,7 @@ export class ProductsService {
 
     const savedProduct = await this.productsRepository.saveProduct(product);
 
-    return mapProductListItem(savedProduct);
+    return this.getProductForAdmin(savedProduct.id);
   }
 
   async deleteProduct(productId: string): Promise<{ success: true }> {
