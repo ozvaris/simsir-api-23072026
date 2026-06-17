@@ -59,6 +59,17 @@ newman run postman/04-checkout-reference-role-tests.postman_collection.json \
   2>&1 | tee postman/reports/04-checkout-reference-role-tests-output.txt
 ```
 
+Orders module example:
+
+```bash
+newman run postman/09-orders-module-tests.postman_collection.json \
+  -e postman/simsir-local.newman-runtime.postman_environment.json \
+  --export-environment postman/simsir-local.newman-runtime.postman_environment.json \
+  --reporters cli,json \
+  --reporter-json-export postman/reports/09-orders-module-tests-report.json \
+  2>&1 | tee postman/reports/09-orders-module-tests-output.txt
+```
+
 ## Recommended Project-Level Run Order
 
 Run collections in this order:
@@ -91,6 +102,10 @@ Run collections in this order:
 
 8. **Product Reviews Submodule Tests**
    - `postman/08-product-reviews-submodule-tests.postman_collection.json`
+
+9. **Orders Module Tests**
+   - `postman/09-orders-module-tests.postman_collection.json`
+   - Verifies customer order lifecycle, admin workflow transitions, role guards, and inventory commit/release effects in one collection.
 
 ## Why This Order
 
@@ -132,6 +147,17 @@ Inventory admin tests assume:
 
 Media, relations, and reviews tests are easier to interpret after the base product flow is already verified.
 
+### 7. Orders tests should run after cart, checkout reference, and inventory checks
+
+Orders module tests depend on:
+
+- role tokens from `01-user-role-token-setup`
+- active product and catalog behavior already being healthy
+- shipping/payment reference data already verified by `04`
+- seeded tracked inventory and inventory admin behavior already verified by `05`
+
+The order collection itself creates its own cart/order runtime state, but it is easier to trust and interpret after the upstream catalog, checkout reference, inventory, and review-ready product surface has already been checked.
+
 ## Reset And Rerun Flow
 
 After a destructive local reset:
@@ -163,6 +189,7 @@ This is especially relevant for:
 
 - checkout reference admin tests;
 - inventory admin tests;
+- orders module tests;
 - other admin/RBAC collections that depend on bearer tokens created earlier in the session.
 
 ## Collection-Level Rule
@@ -195,6 +222,5 @@ This guide covers the current implemented Postman collections for:
 - cart;
 - checkout reference data;
 - inventory admin;
-- product submodules.
-
-When order runtime collections are added later, this guide should be extended with the order flow position and dependencies.
+- product submodules;
+- orders runtime workflow coverage.

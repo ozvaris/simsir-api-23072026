@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -25,7 +25,7 @@ export const DEMO_INVENTORY_SEEDS = [
 ] as const;
 
 @Injectable()
-export class DemoInventorySeedService implements OnApplicationBootstrap {
+export class DemoInventorySeedService implements OnModuleInit {
   private readonly logger = new Logger(DemoInventorySeedService.name);
 
   constructor(
@@ -38,7 +38,7 @@ export class DemoInventorySeedService implements OnApplicationBootstrap {
     private readonly inventoryItemRepository: Repository<InventoryItem>,
   ) {}
 
-  async onApplicationBootstrap(): Promise<void> {
+  async onModuleInit(): Promise<void> {
     if (!shouldRunSeed(this.configService, 'demo')) {
       this.logger.log('Skipping demo inventory seed.');
       return;

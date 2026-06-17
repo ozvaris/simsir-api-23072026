@@ -268,8 +268,8 @@
                   "  const json = pm.response.json();",
                   "  pm.expect(json.id).to.be.a('string').and.not.empty;",
                   "  pm.expect(json.slug).to.eql(pm.environment.get('demo_inventory_product_slug'));",
+                  "  pm.expect(json.isTrackedInventory).to.eql(true);",
                   "  pm.expect(json.inventory).to.be.an('object');",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.expect(json.inventory.onHandQuantity).to.be.a('number');",
                   "  pm.expect(json.inventory.reservedQuantity).to.be.a('number');",
                   "  pm.expect(json.inventory.availableQuantity).to.eql(json.inventory.onHandQuantity - json.inventory.reservedQuantity);",
@@ -329,7 +329,6 @@
                   "  const json = pm.response.json();",
                   "  pm.expect(json.productId).to.eql(pm.environment.get('inventory_test_product_id'));",
                   "  pm.expect(json.inventory).to.be.an('object');",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.expect(json.inventory.availableQuantity).to.eql(json.inventory.onHandQuantity - json.inventory.reservedQuantity);",
                   "});"
                 ]
@@ -388,7 +387,6 @@
                   "});",
                   "pm.test('Save reserved quantity before write flow', function () {",
                   "  const json = pm.response.json();",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.environment.set('inventory_reserved_before_flow', String(json.inventory.reservedQuantity));",
                   "});"
                 ]
@@ -443,7 +441,6 @@
                   "pm.test('Inventory set response is correct', function () {",
                   "  const json = pm.response.json();",
                   "  const reserved = Number(pm.environment.get('inventory_reserved_before_flow'));",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.expect(json.inventory.onHandQuantity).to.eql(30);",
                   "  pm.expect(json.inventory.reservedQuantity).to.eql(reserved);",
                   "  pm.expect(json.inventory.availableQuantity).to.eql(30 - reserved);",
@@ -1128,7 +1125,6 @@
                   "  const json = pm.response.json();",
                   "  const initialOnHand = Number(pm.environment.get('inventory_initial_on_hand'));",
                   "  const initialReserved = Number(pm.environment.get('inventory_initial_reserved'));",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.expect(json.inventory.onHandQuantity).to.eql(initialOnHand);",
                   "  pm.expect(json.inventory.reservedQuantity).to.eql(initialReserved);",
                   "  pm.expect(json.inventory.availableQuantity).to.eql(initialOnHand - initialReserved);",
@@ -1199,7 +1195,6 @@
                   "  const json = pm.response.json();",
                   "  const initialOnHand = Number(pm.environment.get('inventory_initial_on_hand'));",
                   "  const initialReserved = Number(pm.environment.get('inventory_initial_reserved'));",
-                  "  pm.expect(json.inventory.isTracked).to.eql(true);",
                   "  pm.expect(json.inventory.onHandQuantity).to.eql(initialOnHand);",
                   "  pm.expect(json.inventory.reservedQuantity).to.eql(initialReserved);",
                   "  pm.expect(json.inventory.availableQuantity).to.eql(initialOnHand - initialReserved);",

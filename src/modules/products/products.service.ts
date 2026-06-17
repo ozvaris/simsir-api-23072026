@@ -112,6 +112,7 @@ export class ProductsService {
       imgUrl: dto.imgUrl?.trim() || null,
       shortDescription: dto.shortDescription?.trim() || null,
       longDescription: dto.longDescription?.trim() || null,
+      isTrackedInventory: dto.isTrackedInventory ?? false,
       status: dto.status ?? RecordStatus.ACTIVE,
     });
 
@@ -186,6 +187,10 @@ export class ProductsService {
       product.longDescription = dto.longDescription?.trim() || null;
     }
 
+    if (dto.isTrackedInventory !== undefined) {
+      product.isTrackedInventory = dto.isTrackedInventory;
+    }
+
     if (dto.status !== undefined) {
       product.status = dto.status;
     }
@@ -208,6 +213,24 @@ export class ProductsService {
     if (cartItemCount > 0) {
       throw new ConflictException(
         'Product cannot be deleted because it has cart items',
+      );
+    }
+
+    const orderItemCount =
+      await this.productsRepository.countOrderItems(productId);
+
+    if (orderItemCount > 0) {
+      throw new ConflictException(
+        'Product cannot be deleted because it has order items',
+      );
+    }
+
+    const inventoryItemCount =
+      await this.productsRepository.countInventoryItems(productId);
+
+    if (inventoryItemCount > 0) {
+      throw new ConflictException(
+        'Product cannot be deleted because it has inventory records',
       );
     }
 
@@ -239,7 +262,12 @@ export class ProductsService {
     try {
       await this.productsRepository.removeProduct(product);
     } catch (error) {
-      if (error instanceof QueryFailedError) {
+      if (
+        error instanceof QueryFailedError ||
+        (typeof error === 'object' &&
+          error !== null &&
+          ('driverError' in error || 'code' in error))
+      ) {
         throw new ConflictException(
           'Product cannot be deleted because it has related records',
         );

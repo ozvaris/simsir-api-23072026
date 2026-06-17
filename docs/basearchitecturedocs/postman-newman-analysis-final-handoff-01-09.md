@@ -1,10 +1,10 @@
-# Postman Newman Analysis Final Handoff 01-08
+# Postman Newman Analysis Final Handoff 01-09
 
 <a id="purpose"></a>
 
 ## Purpose
 
-This document transfers the final Postman/Newman analysis state after completing collections `01` through `08`.
+This document transfers the final Postman/Newman analysis state after completing collections `01` through `09`.
 
 It summarizes:
 
@@ -122,13 +122,34 @@ Final accepted state:
 06-product-media-submodule-tests: PASS + cleaned + ACCEPT
 07-product-relations-submodule-tests: PASS + cleaned + ACCEPT
 08-product-reviews-submodule-tests: PASS + cleaned + ACCEPT
+09-orders-module-tests: PASS + cleaned + ACCEPT
 ```
 
-Collections `06`, `07`, and `08` were the latest focus of this handoff cycle.
+This final handoff consolidates the accepted Newman state for collections `01` through `09`.
 
 Final independently verified Newman results:
 
 ```txt
+01-user-role-token-setup:
+- 24 requests / 54 assertions / 0 failures
+- final state: PASS
+
+02-category-product-role-tests:
+- 37 requests / 85 assertions / 0 failures
+- final state: PASS + cleaned + ACCEPT
+
+03-cart-endpoint-tests:
+- 22 requests / 59 assertions / 0 failures
+- final state: PASS + cleaned + ACCEPT
+
+04-checkout-reference-role-tests:
+- 45 requests / 109 assertions / 0 failures
+- final state: PASS + cleaned + ACCEPT
+
+05-inventory-admin-tests:
+- 20 requests / 36 assertions / 0 failures
+- final state: PASS + cleaned + ACCEPT
+
 06-product-media-submodule-tests:
 - 11 requests / 27 assertions / 0 failures
 - final state: PASS + cleaned + ACCEPT
@@ -139,6 +160,10 @@ Final independently verified Newman results:
 
 08-product-reviews-submodule-tests:
 - 11 requests / 27 assertions / 0 failures
+- final state: PASS + cleaned + ACCEPT
+
+09-orders-module-tests:
+- 53 requests / 87 assertions / 0 failures
 - final state: PASS + cleaned + ACCEPT
 ```
 
@@ -334,6 +359,58 @@ Main gains:
 - delete-after admin detail verifies `404`;
 - final cleanup unsets only `08`-owned temporary variables.
 
+### 09 Orders Module Tests
+
+Status:
+
+```txt
+PASS + cleaned + ACCEPT
+```
+
+Main gains:
+
+- order module was consolidated into one collection:
+  - `postman/09-orders-module-tests.postman_collection.json`
+- collection-owned temp variables introduced:
+  - `ordersModuleTestProductId`
+  - `ordersModuleTestProductSlug`
+  - `ordersModuleTestShippingAddressId`
+  - `ordersModuleTestBillingAddressId`
+  - `ordersModuleTestShippingServiceId`
+  - `ordersModuleTestPaymentMethodId`
+  - `ordersModuleTestPaymentMethodCode`
+  - `ordersModuleTestInitialOnHand`
+  - `ordersModuleTestInitialReserved`
+  - `ordersModuleTestCustomerOrderId`
+  - `ordersModuleTestCartItemId`
+  - `ordersModuleTestOrderAId`
+  - `ordersModuleTestOrderBId`
+  - `ordersModuleTestOrderCId`
+- customer order lifecycle is now covered in one suite:
+  - cart prepare
+  - order create
+  - customer detail read
+  - customer cancel
+  - reservation release verification
+- admin workflow runtime is now covered on real data:
+  - `confirm`
+  - `ready-for-shipment`
+  - `hand-over`
+  - `deliver`
+  - `delivery-failed`
+  - `return`
+  - `restock-returned-items`
+  - admin `cancel`
+- no-auth / wrong-role / forbidden behavior is explicitly covered for order workflow actions;
+- transition matrix assertions verify practical `409 Conflict` boundaries where actions are called in the wrong state;
+- inventory side effects are verified through admin inventory endpoints:
+  - reserve
+  - release
+  - commit
+  - return restock
+- inventory baseline is intentionally checked after cancel, delivery-failed, return-restock, and admin cancel flows;
+- final cleanup unsets only `09`-owned temporary variables.
+
 <a id="api-behavior-review-summary"></a>
 
 ## API Behavior Review Summary
@@ -342,7 +419,7 @@ Visible behavior from cleaned Newman outputs is broadly consistent with expectat
 
 ### Public / Customer / Admin Separation
 
-The collections now show a clearer separation between public, authenticated customer, and admin/catalog-manager surfaces.
+The collections now show a clearer separation between public, authenticated customer, and admin/catalog-manager/order-manager surfaces.
 
 Examples:
 
@@ -355,12 +432,14 @@ Customer:
 - cart behavior
 - checkout reference access where applicable
 - own product review create/update/delete
+- own order create/read/cancel
 
 Catalog/Admin:
 - product media admin CRUD/read
 - product relation admin create/read/delete
 - product review admin list/detail
 - inventory admin behavior
+- order admin read/workflow actions
 ```
 
 ### RBAC Behavior
@@ -373,6 +452,7 @@ Observed behavior:
 Unauthorized/no-auth requests -> 401 where tested
 Forbidden role access -> 403
 Deleted records -> 404 absence checks where practical
+Invalid workflow transition -> 409 where practical
 ```
 
 ### Delete and Cleanup Behavior
@@ -383,11 +463,12 @@ Later collections now verify delete behavior more meaningfully:
 06 media delete -> success true + 404 absence
 07 relation delete -> success true + 404 absence
 08 review delete -> success true + 404 absence
+09 order workflow -> cart cleanup + environment cleanup + inventory baseline restore
 ```
 
 ### Endpoint Design Notes
 
-No backend endpoint redesign was required during this cleanup pass.
+No backend endpoint redesign was required during this cleanup pass for `06` through `09`.
 
 The current endpoint shapes appear acceptable for the tested flows:
 
@@ -403,6 +484,11 @@ Relations:
 Reviews:
 - public/customer review routes under product parent
 - admin list/detail routes under admin product/review namespace
+
+Orders:
+- customer routes under /api/orders
+- admin read/workflow routes under /api/admin/orders
+- inventory movement verified through /api/admin/products/:productId/inventory/*
 ```
 
 <a id="runtime-environment-and-artifact-hygiene"></a>
@@ -426,6 +512,21 @@ productRelationsSubmoduleTestRelationId
 productReviewsSubmoduleTestProductId
 productReviewsSubmoduleTestProductSlug
 productReviewsSubmoduleTestReviewId
+
+ordersModuleTestProductId
+ordersModuleTestProductSlug
+ordersModuleTestShippingAddressId
+ordersModuleTestBillingAddressId
+ordersModuleTestShippingServiceId
+ordersModuleTestPaymentMethodId
+ordersModuleTestPaymentMethodCode
+ordersModuleTestInitialOnHand
+ordersModuleTestInitialReserved
+ordersModuleTestCustomerOrderId
+ordersModuleTestCartItemId
+ordersModuleTestOrderAId
+ordersModuleTestOrderBId
+ordersModuleTestOrderCId
 ```
 
 Legacy generic `ps_*` keys may still exist in the runtime environment with empty values:
@@ -445,7 +546,7 @@ Current decision:
 
 ```txt
 Do not globally delete legacy ps_* keys yet unless ownership is explicitly reviewed.
-The cleaned 06/07/08 collections no longer use them.
+The cleaned 06/07/08/09 collections no longer use them.
 ```
 
 Security note:
@@ -536,11 +637,11 @@ backend-feature-requests/rbac-permission-granularity-review-feature-request.md
 
 ## Remaining Non-Blocking Notes
 
-These are not blockers for accepting collections `01` through `08`.
+These are not blockers for accepting collections `01` through `09`.
 
 ### No-Auth Coverage Is Not Uniform Everywhere
 
-Some collections include explicit `401` checks, such as `08`.
+Some collections include explicit `401` checks, such as `08` and `09`.
 
 Others primarily focus on authenticated-but-forbidden `403` checks.
 
@@ -568,11 +669,25 @@ This is not blocking because cleaned collections no longer depend on them.
 
 Avoid broad deletion until ownership is reviewed.
 
+### Order Records Are Historical, Not Cleanup Targets
+
+`09-orders-module-tests` intentionally cleans cart state and temporary environment variables.
+
+It does not hard-delete created orders because:
+
+```txt
+orders are historical business records
+inventory baseline is restored through workflow actions instead
+repeatability is maintained by using fresh cart/runtime state per run
+```
+
+This is acceptable for the current collection design.
+
 <a id="recommended-next-step"></a>
 
 ## Recommended Next Step
 
-Since `01` through `08` are now accepted, the next step should not be another rushed collection edit.
+Since `01` through `09` are now accepted, the next step should not be another rushed collection edit.
 
 Recommended next action:
 
@@ -605,7 +720,7 @@ Before continuing in a future session, verify:
 
 ```txt
 [ ] 01 token setup still passes when tokens need refresh.
-[ ] 02-08 accepted status is preserved.
+[ ] 02-09 accepted status is preserved.
 [ ] No backend source code was changed during collection-only hygiene fixes.
 [ ] Shared auth/base/user variables are preserved.
 [ ] Collection-owned temporary variables are unset at the end.

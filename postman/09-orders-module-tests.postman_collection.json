@@ -1,0 +1,2391 @@
+{
+  "info": {
+    "name": "Simsir - 09 Orders Module Tests",
+    "_postman_id": "orders-module-tests",
+    "description": "Orders module regression tests covering customer lifecycle, admin workflow transitions, role guards, and inventory commit/release effects using tokens from 01 User Role Token Setup.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Prerequisite - Capture Order Fixture Inputs",
+      "item": [
+        {
+          "name": "GET /api/products/:slug - capture tracked demo inventory product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "pm.test('Tracked demo product response is valid', function () {",
+                  "  pm.expect(json.slug).to.eql(pm.environment.get('demo_inventory_product_slug'));",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.isTrackedInventory).to.eql(true);",
+                  "});",
+                  "pm.environment.set('ordersModuleTestProductId', json.id);",
+                  "pm.environment.set('ordersModuleTestProductSlug', json.slug);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/products/{{demo_inventory_product_slug}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/users/me/addresses?type=shipping - capture shipping address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('At least one shipping address exists', function () { pm.expect(items.length).to.be.above(0); });",
+                  "if (items.length > 0) { pm.environment.set('ordersModuleTestShippingAddressId', items[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/users/me/addresses?type=shipping"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/users/me/addresses?type=billing - capture billing address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('At least one billing address exists', function () { pm.expect(items.length).to.be.above(0); });",
+                  "if (items.length > 0) { pm.environment.set('ordersModuleTestBillingAddressId', items[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/users/me/addresses?type=billing"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/shipping-carriers - capture first public shipping service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('At least one public shipping service exists', function () { pm.expect(items.length).to.be.above(0); });",
+                  "if (items.length > 0) { pm.environment.set('ordersModuleTestShippingServiceId', items[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/shipping-carriers"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/payment-methods?shippingServiceId=:id - capture selectable payment method",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const selectable = items.filter(function (item) { return item.isSelectable !== false; });",
+                  "const preferred = selectable.find(function (item) { return item.code === 'cash_on_delivery' || item.code === 'card_on_delivery'; }) || selectable[0];",
+                  "pm.test('A selectable payment method exists', function () { pm.expect(preferred).to.exist; });",
+                  "if (preferred) {",
+                  "  pm.environment.set('ordersModuleTestPaymentMethodId', preferred.id);",
+                  "  pm.environment.set('ordersModuleTestPaymentMethodCode', preferred.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/payment-methods?shippingServiceId={{ordersModuleTestShippingServiceId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - capture initial inventory baseline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Inventory baseline is readable', function () {",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('ordersModuleTestProductId'));",
+                  "  pm.expect(json.inventory).to.be.an('object');",
+                  "  pm.expect(json.inventory.onHandQuantity).to.be.a('number');",
+                  "  pm.expect(json.inventory.reservedQuantity).to.be.a('number');",
+                  "});",
+                  "pm.environment.set('ordersModuleTestInitialOnHand', String(json.inventory.onHandQuantity));",
+                  "pm.environment.set('ordersModuleTestInitialReserved', String(json.inventory.reservedQuantity));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Order Guards",
+      "item": [
+        {
+          "name": "GET /api/orders - no token should return 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/orders"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orders - no token should return 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddressId\": \"{{ordersModuleTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{ordersModuleTestBillingAddressId}}\",\n  \"shippingServiceId\": \"{{ordersModuleTestShippingServiceId}}\",\n  \"paymentMethodId\": \"{{ordersModuleTestPaymentMethodId}}\",\n  \"notes\": \"Postman Orders module no-auth test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Customer Lifecycle - Create / Read",
+      "item": [
+        {
+          "name": "DELETE /api/cart - clear cart before order flow",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Clear cart succeeded', function () { pm.expect(pm.response.json().success).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cart/items - add tracked demo product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "const item = (json.items || []).find(function (entry) { return entry.productId === pm.environment.get('ordersModuleTestProductId'); });",
+                  "pm.test('Tracked product exists in cart', function () { pm.expect(item).to.exist; pm.expect(item.quantity).to.eql(1); });",
+                  "if (item && item.id) { pm.environment.set('ordersModuleTestCartItemId', item.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{ordersModuleTestProductId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cart - customer cart should contain tracked item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const item = (json.items || []).find(function (entry) { return entry.productId === pm.environment.get('ordersModuleTestProductId'); });",
+                  "pm.test('Cart shape and summary are valid', function () {",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json.summary).to.be.an('object');",
+                  "  pm.expect(item).to.exist;",
+                  "  pm.expect(json.summary.totalQuantity).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orders - customer create order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('ordersModuleTestCustomerOrderId', json.id); }",
+                  "pm.test('Created order detail response is valid', function () {",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.orderNumber).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('customer_user_id'));",
+                  "  pm.expect(json.orderStatus).to.eql('PENDING');",
+                  "  pm.expect(json.fulfillmentStatus).to.eql('PENDING');",
+                  "  pm.expect(json.items).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(json.addresses).to.be.an('array').with.length(2);",
+                  "  pm.expect(json.paymentSnapshot).to.be.an('object');",
+                  "  pm.expect(json.shipmentSnapshot).to.be.an('object');",
+                  "  pm.expect(json.statusHistory).to.be.an('array').with.length.at.least(3);",
+                  "  pm.expect(json.items[0].productId).to.eql(pm.environment.get('ordersModuleTestProductId'));",
+                  "  pm.expect(json.paymentSnapshot.paymentMethodId).to.eql(pm.environment.get('ordersModuleTestPaymentMethodId'));",
+                  "  pm.expect(json.shipmentSnapshot.shippingCarrierServiceId).to.eql(pm.environment.get('ordersModuleTestShippingServiceId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddressId\": \"{{ordersModuleTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{ordersModuleTestBillingAddressId}}\",\n  \"shippingServiceId\": \"{{ordersModuleTestShippingServiceId}}\",\n  \"paymentMethodId\": \"{{ordersModuleTestPaymentMethodId}}\",\n  \"notes\": \"Postman Orders module test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/orders/:orderId - customer detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Customer detail still matches created order', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('ordersModuleTestCustomerOrderId'));",
+                  "  pm.expect(json.orderStatus).to.eql('PENDING');",
+                  "  pm.expect(json.items[0].productSlugSnapshot).to.eql(pm.environment.get('ordersModuleTestProductSlug'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders/{{ordersModuleTestCustomerOrderId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/orders/:orderId - ORDER_MANAGER detail should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Admin detail includes customer context', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('ordersModuleTestCustomerOrderId'));",
+                  "  pm.expect(json.customer).to.be.an('object');",
+                  "  pm.expect(json.customer.id).to.eql(pm.environment.get('customer_user_id'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestCustomerOrderId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cart - cart should be empty after order create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Cart is empty after order creation', function () { pm.expect(json.items).to.be.an('array').with.length(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Customer Cancel + Inventory Release",
+      "item": [
+        {
+          "name": "POST /api/orders/:orderId/cancel - customer cancel should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Cancelled order response is valid', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('ordersModuleTestCustomerOrderId'));",
+                  "  pm.expect(json.orderStatus).to.eql('CANCELLED');",
+                  "  pm.expect(json.statusHistory).to.be.an('array');",
+                  "  pm.expect(json.statusHistory.some(function (item) { return item.statusType === 'ORDER' && item.toValue === 'CANCELLED'; })).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders/{{ordersModuleTestCustomerOrderId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - inventory should restore baseline after cancel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Inventory baseline is restored', function () {",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand')));",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialReserved')));",
+                  "  pm.expect(json.inventory.availableQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand')) - Number(pm.environment.get('ordersModuleTestInitialReserved')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory/transactions - reserve and release should be visible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const orderId = pm.environment.get('ordersModuleTestCustomerOrderId');",
+                  "const reserveTx = (json.items || []).find(function (item) { return item.orderId === orderId && item.type === 'RESERVE'; });",
+                  "const releaseTx = (json.items || []).find(function (item) { return item.orderId === orderId && item.type === 'RELEASE'; });",
+                  "pm.test('Reserve and release transactions exist for the order', function () { pm.expect(reserveTx).to.exist; pm.expect(releaseTx).to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory/transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory/reservations - released reservation should be visible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const orderId = pm.environment.get('ordersModuleTestCustomerOrderId');",
+                  "const reservation = (json.items || []).find(function (item) { return item.orderId === orderId; });",
+                  "pm.test('Released reservation exists for the order', function () { pm.expect(reservation).to.exist; pm.expect(reservation.status).to.eql('RELEASED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory/reservations"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Admin Workflow - Transition Matrix + Deliver / Return / Restock",
+      "item": [
+        {
+          "name": "DELETE /api/cart - clear cart before Order A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cart/items - add tracked product for Order A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const item = (pm.response.json().items || []).find(function (entry) { return entry.productId === pm.environment.get('ordersModuleTestProductId'); });",
+                  "pm.test('Tracked product exists in cart for Order A', function () { pm.expect(item).to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{ordersModuleTestProductId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orders - create Order A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('ordersModuleTestOrderAId', json.id);",
+                  "pm.test('Order A created in pending state', function () { pm.expect(json.orderStatus).to.eql('PENDING'); pm.expect(json.fulfillmentStatus).to.eql('PENDING'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddressId\": \"{{ordersModuleTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{ordersModuleTestBillingAddressId}}\",\n  \"shippingServiceId\": \"{{ordersModuleTestShippingServiceId}}\",\n  \"paymentMethodId\": \"{{ordersModuleTestPaymentMethodId}}\",\n  \"notes\": \"Postman Orders Orders Module A\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orders/:orderId/confirm - no token should return 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - POST /api/admin/orders/:orderId/confirm should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - POST /api/admin/orders/:orderId/confirm should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/ready-for-shipment before confirm should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/ready-for-shipment",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/confirm should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Order A becomes confirmed', function () { pm.expect(json.orderStatus).to.eql('CONFIRMED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order A confirmed in workflow test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/confirm again should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/hand-over before ready should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/hand-over",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"PT-ORDER-A-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/ready-for-shipment should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Order A becomes READY_FOR_SHIPMENT', function () { pm.expect(pm.response.json().fulfillmentStatus).to.eql('READY_FOR_SHIPMENT'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/ready-for-shipment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order A ready for shipment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPPORT_STAFF - GET /api/admin/orders/:orderId should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Support staff can read admin order detail', function () { pm.expect(pm.response.json().id).to.eql(pm.environment.get('ordersModuleTestOrderAId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{support_staff_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/deliver before hand-over should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/deliver",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/hand-over should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Order A becomes HANDED_OVER and tracking is saved', function () { pm.expect(json.fulfillmentStatus).to.eql('HANDED_OVER'); pm.expect(json.shipmentSnapshot.trackingNumber).to.eql('PT-ORDER-A-001'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/hand-over",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"PT-ORDER-A-001\",\n  \"note\": \"Order A handed over\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/deliver should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "const paymentCode = pm.environment.get('ordersModuleTestPaymentMethodCode');",
+                  "pm.test('Order A is delivered and completed', function () {",
+                  "  pm.expect(json.fulfillmentStatus).to.eql('DELIVERED');",
+                  "  pm.expect(json.orderStatus).to.eql('COMPLETED');",
+                  "  if (paymentCode === 'cash_on_delivery' || paymentCode === 'card_on_delivery') { pm.expect(json.paymentStatus).to.eql('PAID'); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/deliver",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order A delivered\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - commit effect should be visible after deliver",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Committed inventory effect is visible', function () {",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand')) - 1);",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialReserved')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory/transactions - reserve and commit should be visible for Order A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const orderId = pm.environment.get('ordersModuleTestOrderAId');",
+                  "const items = pm.response.json().items || [];",
+                  "pm.test('Reserve and commit transactions exist for Order A', function () {",
+                  "  pm.expect(items.some(function (item) { return item.orderId === orderId && item.type === 'RESERVE'; })).to.eql(true);",
+                  "  pm.expect(items.some(function (item) { return item.orderId === orderId && item.type === 'COMMIT'; })).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory/transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/return should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Order A becomes RETURNED', function () { pm.expect(pm.response.json().fulfillmentStatus).to.eql('RETURNED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/return",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order A returned\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/restock-returned-items should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderAId}}/restock-returned-items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order A restocked after return\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - restock should restore baseline after return",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Inventory baseline is restored after return restock', function () {",
+                  "  pm.expect(json.inventory.onHandQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand')));",
+                  "  pm.expect(json.inventory.reservedQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialReserved')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Admin Workflow - Delivery Failed Should Release Reservation",
+      "item": [
+        {
+          "name": "DELETE /api/cart - clear cart before Order B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cart/items - add tracked product for Order B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{ordersModuleTestProductId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orders - create Order B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.environment.set('ordersModuleTestOrderBId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddressId\": \"{{ordersModuleTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{ordersModuleTestBillingAddressId}}\",\n  \"shippingServiceId\": \"{{ordersModuleTestShippingServiceId}}\",\n  \"paymentMethodId\": \"{{ordersModuleTestPaymentMethodId}}\",\n  \"notes\": \"Postman Orders Orders Module B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/confirm Order B should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderBId}}/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/ready-for-shipment Order B should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderBId}}/ready-for-shipment",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/hand-over Order B should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderBId}}/hand-over",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"PT-ORDER-B-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/delivery-failed should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Order B becomes DELIVERY_FAILED', function () { pm.expect(pm.response.json().fulfillmentStatus).to.eql('DELIVERY_FAILED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderBId}}/delivery-failed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order B delivery failed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - release effect should restore baseline after delivery failed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Inventory baseline is restored after delivery failed', function () { pm.expect(json.inventory.onHandQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand'))); pm.expect(json.inventory.reservedQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialReserved'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Admin Workflow - Admin Cancel Should Release Reservation",
+      "item": [
+        {
+          "name": "DELETE /api/cart - clear cart before Order C",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cart/items - add tracked product for Order C",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{ordersModuleTestProductId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orders - create Order C",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.environment.set('ordersModuleTestOrderCId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddressId\": \"{{ordersModuleTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{ordersModuleTestBillingAddressId}}\",\n  \"shippingServiceId\": \"{{ordersModuleTestShippingServiceId}}\",\n  \"paymentMethodId\": \"{{ordersModuleTestPaymentMethodId}}\",\n  \"notes\": \"Postman Orders Orders Module C\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER_MANAGER - POST /api/admin/orders/:orderId/cancel should return 200 or 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Order C becomes CANCELLED', function () { pm.expect(pm.response.json().orderStatus).to.eql('CANCELLED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/orders/{{ordersModuleTestOrderCId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Order C cancelled by admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/products/:productId/inventory - release effect should restore baseline after admin cancel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Inventory baseline is restored after admin cancel', function () { pm.expect(json.inventory.onHandQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialOnHand'))); pm.expect(json.inventory.reservedQuantity).to.eql(Number(pm.environment.get('ordersModuleTestInitialReserved'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{order_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/admin/products/{{ordersModuleTestProductId}}/inventory"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Final Environment Hygiene",
+      "item": [
+        {
+          "name": "DELETE /api/cart - final cleanup and unset orders-module-owned variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.environment.unset('ordersModuleTestProductId');",
+                  "pm.environment.unset('ordersModuleTestProductSlug');",
+                  "pm.environment.unset('ordersModuleTestShippingAddressId');",
+                  "pm.environment.unset('ordersModuleTestBillingAddressId');",
+                  "pm.environment.unset('ordersModuleTestShippingServiceId');",
+                  "pm.environment.unset('ordersModuleTestPaymentMethodId');",
+                  "pm.environment.unset('ordersModuleTestPaymentMethodCode');",
+                  "pm.environment.unset('ordersModuleTestInitialOnHand');",
+                  "pm.environment.unset('ordersModuleTestInitialReserved');",
+                  "pm.environment.unset('ordersModuleTestCustomerOrderId');",
+                  "pm.environment.unset('ordersModuleTestCartItemId');",
+                  "pm.environment.unset('ordersModuleTestOrderAId');",
+                  "pm.environment.unset('ordersModuleTestOrderBId');",
+                  "pm.environment.unset('ordersModuleTestOrderCId');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{Backend_URL}}/api/cart"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,31 @@ The goal is to keep Postman artifacts:
 - easy to run in a predictable order;
 - synchronized with shared environment usage.
 
+## Contents
+
+* [Purpose](#purpose)
+* [Core Rule](#core-rule)
+* [Filesystem Layout Rule](#filesystem-layout-rule)
+* [Shared Environment Rule](#shared-environment-rule)
+* [Setup Collection Dependency Rule](#setup-collection-dependency-rule)
+* [Collection Naming Rule](#collection-naming-rule)
+* [Collection Filename Rule](#collection-filename-rule)
+* [Modular Collection Rule](#modular-collection-rule)
+* [Folder Rule Inside A Collection](#folder-rule-inside-a-collection)
+* [Postman Environment Variables](#postman-environment-variables)
+* [URL Rule](#url-rule)
+* [Authorization Rule](#authorization-rule)
+* [Request Naming Rule](#request-naming-rule)
+* [Status Code Test Rule](#status-code-test-rule)
+* [Response Shape Rule](#response-shape-rule)
+* [Variable Capture Rule](#variable-capture-rule)
+* [CRUD Flow Rule](#crud-flow-rule)
+* [RBAC Role Test Rule](#rbac-role-test-rule)
+* [Documentation Rule](#documentation-rule)
+* [Postman Change Propagation Rule](#postman-change-propagation-rule)
+* [Generation Checklist](#generation-checklist)
+* [Recommended Handoff Format](#recommended-handoff-format)
+
 ## Core Rule
 
 When the user asks for a Postman artifact, generate or update an importable `.postman_collection.json` file instead of only pasting raw JSON.
@@ -40,6 +65,7 @@ postman/
   06-product-media-submodule-tests.postman_collection.json
   07-product-relations-submodule-tests.postman_collection.json
   08-product-reviews-submodule-tests.postman_collection.json
+  09-orders-module-tests.postman_collection.json
   simsir-local.postman_environment.json
 ```
 
@@ -172,7 +198,7 @@ Preferred model:
 - one collection for checkout reference flows;
 - one collection for inventory admin;
 - one collection per product submodule test area;
-- future order runtime should also become its own collection.
+- one collection for the orders runtime module.
 
 Reason:
 

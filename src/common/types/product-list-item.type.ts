@@ -1,5 +1,4 @@
 export type ProductInventorySummary = {
-  isTracked: boolean;
   onHandQuantity: number | null;
   reservedQuantity: number | null;
   availableQuantity: number | null;
@@ -11,6 +10,7 @@ export type ProductListItem = {
   title: string;
   brandName: string | null;
   categoryId: string;
+  isTrackedInventory: boolean;
   price: number;
   discount: number;
   rating: number;

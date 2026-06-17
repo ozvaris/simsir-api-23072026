@@ -5,7 +5,6 @@ import { InventoryTransaction } from '../entities/inventory-transaction.entity';
 export function mapInventorySummary(inventoryItem: InventoryItem | null) {
   if (!inventoryItem) {
     return {
-      isTracked: false,
       onHandQuantity: null,
       reservedQuantity: null,
       availableQuantity: null,
@@ -13,7 +12,6 @@ export function mapInventorySummary(inventoryItem: InventoryItem | null) {
   }
 
   return {
-    isTracked: true,
     onHandQuantity: inventoryItem.onHandQuantity,
     reservedQuantity: inventoryItem.reservedQuantity,
     availableQuantity:

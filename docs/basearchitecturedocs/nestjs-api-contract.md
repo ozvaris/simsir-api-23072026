@@ -28,7 +28,7 @@ This document is not an architecture guide and is not an entity schema document.
 - [Addresses API](#addresses-api)
 - [Categories API](#categories-api)
 - [Products API](#products-api)
-- [Planned Inventory Admin API](#planned-inventory-admin-api)
+- [Inventory Admin API](#inventory-admin-api)
 - [Cart API](#cart-api)
 - [Checkout Reference API](#checkout-reference-api)
 - [Orders API](#orders-api)
@@ -542,6 +542,7 @@ Response JSON:
       "title": "iPhone 13 Pro Max",
       "brandName": "Apple",
       "categoryId": "cat_001",
+      "isTrackedInventory": true,
       "price": 1299,
       "discount": 10,
       "rating": 4.9,
@@ -550,7 +551,6 @@ Response JSON:
       "longDescription": "Detailed product description",
       "status": "active",
       "inventory": {
-        "isTracked": true,
         "onHandQuantity": 24,
         "reservedQuantity": 2,
         "availableQuantity": 22
@@ -654,6 +654,7 @@ Response JSON:
       "title": "iPhone 13 Pro Max",
       "brandName": "Apple",
       "categoryId": "cat_001",
+      "isTrackedInventory": true,
       "price": 1299,
       "discount": 10,
       "rating": 4.9,
@@ -661,7 +662,6 @@ Response JSON:
       "shortDescription": "Flagship smartphone",
       "longDescription": "Detailed product description",
       "inventory": {
-        "isTracked": true,
         "onHandQuantity": 24,
         "reservedQuantity": 2,
         "availableQuantity": 22
@@ -693,6 +693,7 @@ Response JSON:
   "title": "iPhone 13 Pro Max",
   "brandName": "Apple",
   "categoryId": "cat_001",
+  "isTrackedInventory": true,
   "price": 1299,
   "discount": 10,
   "rating": 4.9,
@@ -700,7 +701,6 @@ Response JSON:
   "shortDescription": "Flagship smartphone",
   "longDescription": "Detailed product description",
   "inventory": {
-    "isTracked": true,
     "onHandQuantity": 24,
     "reservedQuantity": 2,
     "availableQuantity": 22
@@ -790,6 +790,7 @@ Response JSON:
       "title": "iPhone 13 Pro Max",
       "brandName": "Apple",
       "categoryId": "cat_001",
+      "isTrackedInventory": true,
       "price": 1299,
       "discount": 10,
       "rating": 4.9,
@@ -798,7 +799,6 @@ Response JSON:
       "longDescription": "Detailed product description",
       "status": "active",
       "inventory": {
-        "isTracked": true,
         "onHandQuantity": 24,
         "reservedQuantity": 2,
         "availableQuantity": 22
@@ -829,6 +829,7 @@ Response JSON:
   "title": "iPhone 13 Pro Max",
   "brandName": "Apple",
   "categoryId": "cat_001",
+  "isTrackedInventory": true,
   "price": 1299,
   "discount": 10,
   "rating": 4.9,
@@ -837,7 +838,6 @@ Response JSON:
   "longDescription": "Detailed product description",
   "status": "active",
   "inventory": {
-    "isTracked": true,
     "onHandQuantity": 24,
     "reservedQuantity": 2,
     "availableQuantity": 22
@@ -861,6 +861,7 @@ Response JSON:
   "title": "Postman Test Product",
   "brandName": "Postman Brand",
   "categoryId": "cat_001",
+  "isTrackedInventory": false,
   "price": 129.99,
   "discount": 10,
   "rating": 4.8,
@@ -869,7 +870,6 @@ Response JSON:
   "longDescription": "Created from admin product API.",
   "status": "active",
   "inventory": {
-    "isTracked": false,
     "onHandQuantity": null,
     "reservedQuantity": null,
     "availableQuantity": null
@@ -893,6 +893,7 @@ Response JSON:
   "title": "Postman Test Product Updated",
   "brandName": "Postman Brand",
   "categoryId": "cat_001",
+  "isTrackedInventory": false,
   "price": 139.99,
   "discount": 5,
   "rating": 4.8,
@@ -901,7 +902,6 @@ Response JSON:
   "longDescription": "Created from admin product API.",
   "status": "inactive",
   "inventory": {
-    "isTracked": false,
     "onHandQuantity": null,
     "reservedQuantity": null,
     "availableQuantity": null
@@ -925,9 +925,9 @@ Rules:
 - source or target product relations block delete with `409 Conflict`;
 - use `PATCH /api/admin/products/:productId` to change `status`.
 
-<a id="planned-inventory-admin-api"></a>
+<a id="inventory-admin-api"></a>
 
-## Planned Inventory Admin API
+## Inventory Admin API
 
 Inventory management should stay separate from product catalog create/update payloads.
 
@@ -944,6 +944,12 @@ Because of that:
 - `PATCH /api/admin/products/:productId` should not accept stock fields;
 - inventory should be managed through separate admin endpoints.
 
+Inventory tracking contract:
+
+- `isTrackedInventory` is the single product-level source of truth for whether a product participates in inventory tracking;
+- `inventory` objects expose quantity summary only;
+- `inventory.isTracked` should not be used as a separate response field.
+
 Recommended initial endpoint set:
 
 ### `GET /api/admin/products/:productId/inventory`
@@ -958,7 +964,6 @@ Response JSON:
 {
   "productId": "prd_001",
   "inventory": {
-    "isTracked": true,
     "onHandQuantity": 24,
     "reservedQuantity": 2,
     "availableQuantity": 22
@@ -988,7 +993,6 @@ Response JSON:
 {
   "productId": "prd_001",
   "inventory": {
-    "isTracked": true,
     "onHandQuantity": 24,
     "reservedQuantity": 0,
     "availableQuantity": 24
@@ -1036,7 +1040,6 @@ Response JSON:
   "success": true,
   "productId": "prd_001",
   "inventory": {
-    "isTracked": true,
     "onHandQuantity": 29,
     "reservedQuantity": 2,
     "availableQuantity": 27
@@ -1681,9 +1684,9 @@ Required rule:
 
 Current implementation note:
 
-- the project now has phase-1 order and inventory entities plus demo seed support;
-- customer or admin order endpoints are not implemented yet in runtime code;
-- this section remains the target contract for the next workflow phase, not a fully available API surface today.
+- customer order endpoints are implemented in runtime code;
+- admin order read/workflow endpoints are implemented in runtime code;
+- the contract below should now be treated as the current API surface baseline for the orders module.
 
 ### `POST /api/orders`
 
@@ -1691,17 +1694,215 @@ Purpose:
 
 - create order from current cart and checkout payload.
 
+Request JSON:
+
+```json
+{
+  "shippingAddressId": "addr_shipping_001",
+  "billingAddressId": "addr_billing_001",
+  "shippingServiceId": "ship_service_001",
+  "paymentMethodId": "pay_method_001",
+  "notes": "Leave at building reception"
+}
+```
+
+Rules:
+
+- cart must contain at least one item;
+- shipping address must belong to the current user and be of type `shipping`;
+- billing address must belong to the current user and be of type `billing`;
+- selected shipping service must be active and publicly selectable;
+- selected payment method must be valid for the selected shipping service;
+- tracked-inventory products must have enough available quantity before order creation;
+- successful order creation clears the active cart;
+- order creation creates inventory reservations for tracked products.
+
+Response JSON shape:
+
+- returns order detail response;
+- includes item snapshots, address snapshots, payment snapshot, shipment snapshot, and status history.
+
 ### `GET /api/orders`
 
 Purpose:
 
 - list current user's orders.
 
+Query params:
+
+- `page`
+- `limit`
+- `orderStatus`
+- `paymentStatus`
+- `fulfillmentStatus`
+
+Response JSON shape:
+
+```json
+{
+  "items": [
+    {
+      "id": "ord_001",
+      "orderNumber": "ORD-20260617-ABC123",
+      "orderStatus": "PENDING",
+      "paymentStatus": "PENDING",
+      "fulfillmentStatus": "PENDING",
+      "currency": "TRY",
+      "grandTotal": 1549.99,
+      "createdAt": "2026-06-17T20:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalItems": 1,
+    "totalPages": 1
+  }
+}
+```
+
 ### `GET /api/orders/:orderId`
 
 Purpose:
 
 - fetch current user's order detail.
+
+Rules:
+
+- current user can only read own orders;
+- missing or foreign order id returns `404 Not Found`.
+
+### `POST /api/orders/:orderId/cancel`
+
+Purpose:
+
+- allow the current customer to cancel an eligible order;
+- release active tracked-inventory reservations created by that order.
+
+Rules:
+
+- customer cancel is intended for cancellable pre-delivery states;
+- successful cancel appends order status history;
+- reservation release restores `reservedQuantity` and `availableQuantity` appropriately.
+
+### `GET /api/admin/orders`
+
+Purpose:
+
+- list orders for admin and operations review.
+
+Required permission:
+
+- `order.read_all`
+
+Query params:
+
+- `page`
+- `limit`
+- `orderStatus`
+- `paymentStatus`
+- `fulfillmentStatus`
+- `userId`
+- `search`
+
+### `GET /api/admin/orders/:orderId`
+
+Purpose:
+
+- fetch full order detail for admin and support workflows.
+
+Required permission:
+
+- `order.read_all`
+
+Admin detail response shape:
+
+- extends normal order detail response;
+- includes `customer` object context for admin-facing consumers.
+
+### `POST /api/admin/orders/:orderId/confirm`
+
+Purpose:
+
+- move an order into confirmed processing state.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/ready-for-shipment`
+
+Purpose:
+
+- mark the order as operationally ready for shipment.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/hand-over`
+
+Purpose:
+
+- hand the order over to the shipping carrier;
+- optionally save tracking number information in shipment snapshot.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/deliver`
+
+Purpose:
+
+- complete delivery workflow;
+- commit tracked inventory reservations into final stock movement.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/delivery-failed`
+
+Purpose:
+
+- mark delivery as failed;
+- release active tracked-inventory reservations for the order.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/return`
+
+Purpose:
+
+- mark the order as returned after delivery.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/restock-returned-items`
+
+Purpose:
+
+- restock returned tracked-inventory items after return processing.
+
+Required permission:
+
+- `order.update_status`
+
+### `POST /api/admin/orders/:orderId/cancel`
+
+Purpose:
+
+- allow operations/admin-side cancellation flow;
+- release active tracked-inventory reservations when applicable.
+
+Required permission:
+
+- `order.cancel`
 
 <a id="common-error-json"></a>
 

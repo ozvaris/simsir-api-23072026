@@ -6,6 +6,8 @@ import { Not, Repository } from 'typeorm';
 import { RecordStatus } from '../../../common/enums/record-status.enum';
 import { CartItem } from '../../cart/entities/cart-item.entity';
 import { Category } from '../../categories/entities/category.entity';
+import { InventoryItem } from '../../inventory/entities/inventory-item.entity';
+import { OrderItem } from '../../orders/entities/order-item.entity';
 import { ProductMedia } from '../../product-media/entities/product-media.entity';
 import { ProductRelation } from '../../product-relations/entities/product-relation.entity';
 import { ProductReview } from '../../product-reviews/entities/product-review.entity';
@@ -205,6 +207,22 @@ export class ProductsRepository {
 
   countCartItems(productId: string): Promise<number> {
     return this.productRepository.manager.getRepository(CartItem).count({
+      where: {
+        productId,
+      },
+    });
+  }
+
+  countOrderItems(productId: string): Promise<number> {
+    return this.productRepository.manager.getRepository(OrderItem).count({
+      where: {
+        productId,
+      },
+    });
+  }
+
+  countInventoryItems(productId: string): Promise<number> {
+    return this.productRepository.manager.getRepository(InventoryItem).count({
       where: {
         productId,
       },

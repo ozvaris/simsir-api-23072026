@@ -32,6 +32,14 @@ Current Postman/Newman tests already validate important runtime behavior and the
 
 As the API grows, inconsistent response schemas, error formats, pagination behavior, status codes, headers, and method semantics can create frontend integration problems, documentation drift, difficult debugging, and inconsistent client behavior. A dedicated compliance audit will make the API more predictable, easier to document, and safer for future clients.
 
+## Related Guardrail Test Coverage
+
+Cross-module protocol and contract audit coverage is tracked separately in:
+
+- `docs/backend-feature-requests/12-state-consistency-cross-module-tests-api-contract-and-protocol-compliance-audit.md`
+
+This does not replace the broader API contract and protocol compliance review. It provides an implementation-ready behavioral audit plan that can later verify response consistency, state transitions, deletion behavior, and runtime hygiene across modules.
+
 ## Status
 
 Future Feature Request

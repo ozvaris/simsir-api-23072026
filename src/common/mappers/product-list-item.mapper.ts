@@ -10,11 +10,18 @@ function toNumber(value: string | number | null | undefined): number {
 }
 
 function mapInventorySummary(product: Product): ProductListItem['inventory'] {
+  if (!product.isTrackedInventory) {
+    return {
+      onHandQuantity: null,
+      reservedQuantity: null,
+      availableQuantity: null,
+    };
+  }
+
   const inventoryItem = product.inventoryItems?.[0] ?? null;
 
   if (!inventoryItem) {
     return {
-      isTracked: false,
       onHandQuantity: null,
       reservedQuantity: null,
       availableQuantity: null,
@@ -25,7 +32,6 @@ function mapInventorySummary(product: Product): ProductListItem['inventory'] {
   const reservedQuantity = inventoryItem.reservedQuantity;
 
   return {
-    isTracked: true,
     onHandQuantity,
     reservedQuantity,
     availableQuantity: onHandQuantity - reservedQuantity,
@@ -39,6 +45,7 @@ export function mapProductListItem(product: Product): ProductListItem {
     title: product.title,
     brandName: product.brandName,
     categoryId: product.categoryId,
+    isTrackedInventory: product.isTrackedInventory,
     price: toNumber(product.price),
     discount: toNumber(product.discount),
     rating: toNumber(product.rating),

@@ -1,6 +1,7 @@
 // src/modules/products/dto/update-product.dto.ts
 
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -64,6 +65,10 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   longDescription?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isTrackedInventory?: boolean;
 
   @IsOptional()
   @IsEnum(RecordStatus)

@@ -1,6 +1,7 @@
 // src/modules/products/dto/create-product.dto.ts
 
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -60,6 +61,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   longDescription?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isTrackedInventory?: boolean;
 
   @IsOptional()
   @IsEnum(RecordStatus)

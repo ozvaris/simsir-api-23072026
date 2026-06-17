@@ -51,6 +51,14 @@ After expected behaviors are agreed at the architecture level, Postman/Newman ne
 
 That verification would be downstream of the backend standardization decision, not the main purpose of this feature request.
 
+## Related Guardrail Test Coverage
+
+Cross-module negative validation test coverage is tracked separately in:
+
+- `docs/backend-feature-requests/10-negative-validation-cross-module-tests-feature-request.md`
+
+This does not replace the backend validation and error-behavior standardization work. It provides an initial behavioral guardrail layer that can later help verify agreed expectations across modules.
+
 ## Status
 
 Future Feature Request

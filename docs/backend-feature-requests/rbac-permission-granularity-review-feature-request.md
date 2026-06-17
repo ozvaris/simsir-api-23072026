@@ -45,6 +45,15 @@ A future review can evaluate whether selected admin capabilities should remain b
 
 The goal should be a project-wide authorization design review rather than an immediate refactor of current RBAC behavior.
 
+## Related Guardrail Test Coverage
+
+Auth boundary cross-module test coverage is tracked separately in:
+
+- `docs/backend-feature-requests/09-auth-boundary-cross-module-tests-feature-request.md`
+- `docs/backend-feature-requests/11-ownership-isolation-cross-module-tests-feature-request.md`
+
+This does not replace the RBAC granularity review. It provides the first behavioral guardrail layer before any permission model refinement.
+
 ## Status
 
 Future Feature Request

@@ -51,6 +51,9 @@ export class Product extends AppBaseEntity {
   @Column({ type: 'text', nullable: true })
   longDescription!: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  isTrackedInventory!: boolean;
+
   @Index()
   @Column({
     type: 'varchar',

@@ -1,6 +1,6 @@
 // src/modules/addresses/seed/demo-addresses-seed.service.ts
 
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -41,7 +41,7 @@ export const DEMO_ADDRESS_SEEDS = [
 ] as const;
 
 @Injectable()
-export class DemoAddressesSeedService implements OnApplicationBootstrap {
+export class DemoAddressesSeedService implements OnModuleInit {
   private readonly logger = new Logger(DemoAddressesSeedService.name);
 
   constructor(
@@ -54,7 +54,7 @@ export class DemoAddressesSeedService implements OnApplicationBootstrap {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async onApplicationBootstrap(): Promise<void> {
+  async onModuleInit(): Promise<void> {
     if (!shouldRunSeed(this.configService, 'demo')) {
       this.logger.log('Skipping demo address seed.');
       return;

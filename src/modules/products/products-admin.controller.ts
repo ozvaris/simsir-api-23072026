@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   Patch,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -28,7 +29,7 @@ export class ProductsAdminController {
 
   @Get(':productId')
   @Permissions('catalog.product.read')
-  getProduct(@Param('productId') productId: string) {
+  getProduct(@Param('productId', new ParseUUIDPipe()) productId: string) {
     return this.productsService.getProductForAdmin(productId);
   }
 
@@ -41,7 +42,7 @@ export class ProductsAdminController {
   @Patch(':productId')
   @Permissions('catalog.product.update')
   updateProduct(
-    @Param('productId') productId: string,
+    @Param('productId', new ParseUUIDPipe()) productId: string,
     @Body() dto: UpdateProductDto,
   ) {
     return this.productsService.updateProduct(productId, dto);
@@ -49,7 +50,7 @@ export class ProductsAdminController {
 
   @Delete(':productId')
   @Permissions('catalog.product.delete')
-  deleteProduct(@Param('productId') productId: string) {
+  deleteProduct(@Param('productId', new ParseUUIDPipe()) productId: string) {
     return this.productsService.deleteProduct(productId);
   }
 }

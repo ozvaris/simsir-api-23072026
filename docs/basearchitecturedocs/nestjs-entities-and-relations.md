@@ -319,12 +319,14 @@ Properties:
 - `imgUrl`
 - `shortDescription`
 - `longDescription`
+- `isTrackedInventory`
 - `status`
 
 Notes:
 
 - `active` products are visible in the public catalog.
 - `inactive` products remain manageable in admin flows but are hidden from public catalog endpoints.
+- `isTrackedInventory` is the product-level source of truth for whether the product participates in inventory reservation and stock movement flows.
 - stock quantity does not live on `Product` in the current model.
 - stock is owned by `InventoryItem` and related inventory records.
 - product response contracts may expose an inventory summary derived from the related inventory item.
@@ -573,6 +575,12 @@ Properties:
 - `shippingCarrierServiceId`
 - `notes`
 
+Notes:
+
+- `Order` is a historical business record, not a mutable cart-like object;
+- payment and shipping references may later become unavailable, so snapshot tables remain the stable read model source for order detail;
+- customer and admin order runtime endpoints now operate on this aggregate.
+
 ### `OrderItem`
 
 Product snapshot line within an order.
@@ -672,6 +680,11 @@ Supported `statusType` values:
 - `PAYMENT`
 - `FULFILLMENT`
 
+Notes:
+
+- this table is append-only;
+- customer cancel and admin workflow actions should both leave traceable history entries.
+
 ### `InventoryItem`
 
 Current stock state for a product.
@@ -685,6 +698,8 @@ Properties:
 
 Notes:
 
+- one `InventoryItem` row is intended per product in the current business model;
+- the code-level mapping is `Product 1 - N InventoryItem`, but `productId` is unique, so the effective runtime rule is logical one-to-one;
 - should be managed by dedicated inventory admin endpoints, not product create/update DTOs;
 - `onHandQuantity` may be set or adjusted by admin inventory operations;
 - `reservedQuantity` is system-managed and should move through reservation workflow, not direct catalog editing.
@@ -762,7 +777,7 @@ Supported `type` values:
 - `Product 1 - N ProductMedia`
 - `Product 1 - N ProductReview`
 - `Product 1 - N CartItem`
-- `Product 1 - 1 InventoryItem` in the current phase-1 inventory model
+- `Product 1 - N InventoryItem` in entity mapping, but logical `1 - 1` in current runtime because `InventoryItem.productId` is unique
 - `Product 1 - N OrderItem`
 - `Product 1 - N ProductRelation` as source product
 - `Product 1 - N ProductRelation` as target product
