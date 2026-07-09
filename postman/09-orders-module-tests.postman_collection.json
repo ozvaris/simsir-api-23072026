@@ -421,7 +421,10 @@
                   "  pm.expect(json.id).to.be.a('string').and.not.empty;",
                   "  pm.expect(json.items).to.be.an('array');",
                   "  pm.expect(json.summary).to.be.an('object');",
+                  "  pm.expect(json.summary.taxIncluded).to.be.a('number');",
                   "  pm.expect(item).to.exist;",
+                  "  pm.expect(item.product).to.be.an('object');",
+                  "  pm.expect(item.product.tax).to.be.a('number');",
                   "  pm.expect(json.summary.totalQuantity).to.be.at.least(1);",
                   "});"
                 ]

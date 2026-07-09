@@ -6,6 +6,7 @@ export class CartItemProductResponse {
   title!: string;
   brandName!: string | null;
   imgUrl!: string | null;
+  tax!: number;
 }
 
 export class CartItemResponse {

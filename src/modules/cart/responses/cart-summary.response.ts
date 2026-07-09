@@ -5,5 +5,6 @@ export class CartSummaryResponse {
   totalQuantity!: number;
   subtotal!: number;
   discountTotal!: number;
+  taxIncluded!: number;
   total!: number;
 }

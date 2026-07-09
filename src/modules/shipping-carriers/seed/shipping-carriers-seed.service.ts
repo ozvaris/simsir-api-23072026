@@ -93,7 +93,7 @@ export const SHIPPING_CARRIER_SEEDS = [
       },
       {
         code: 'branch_delivery',
-        name: 'Subeden Teslim',
+        name: 'Magazadan Teslim',
         price: '49.90',
         description: 'Sube teslim alma secenegi',
         estimatedDeliveryText: '1-2 is gunu',

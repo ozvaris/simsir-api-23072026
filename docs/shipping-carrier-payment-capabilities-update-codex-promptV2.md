@@ -107,7 +107,7 @@ Examples:
 standard_delivery -> Standart Teslimat
 express_delivery  -> Ekspres Teslimat
 same_day_delivery -> Ayni Gun Teslimat
-branch_delivery   -> Subeden Teslim
+branch_delivery   -> Magazadan Teslim
 ```
 
 The checkout shipping selection should identify the selected shipping service/option, not only the carrier.

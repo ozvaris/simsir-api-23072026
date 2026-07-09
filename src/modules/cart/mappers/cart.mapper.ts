@@ -21,16 +21,23 @@ function roundMoney(value: number): number {
 function calculateLine(item: CartItem) {
   const unitPrice = toNumber(item.product?.price);
   const discount = toNumber(item.product?.discount);
+  const tax = toNumber(item.product?.tax);
   const finalUnitPrice = roundMoney(unitPrice * (1 - discount / 100));
   const lineTotal = roundMoney(finalUnitPrice * item.quantity);
   const lineSubtotal = roundMoney(unitPrice * item.quantity);
+  const taxIncluded =
+    tax > 0
+      ? roundMoney((lineTotal * tax) / (100 + tax))
+      : 0;
 
   return {
     unitPrice,
     discount,
+    tax,
     finalUnitPrice,
     lineTotal,
     lineSubtotal,
+    taxIncluded,
   };
 }
 
@@ -52,6 +59,7 @@ export function toCartItemResponse(item: CartItem): CartItemResponse {
       title: item.product.title,
       brandName: item.product.brandName,
       imgUrl: item.product.imgUrl,
+      tax: line.tax,
     },
   };
 }
@@ -64,12 +72,14 @@ export function toCartSummaryResponse(items: CartItem[]): CartSummaryResponse {
       summary.totalQuantity += item.quantity;
       summary.subtotal += line.lineSubtotal;
       summary.total += line.lineTotal;
+      summary.taxIncluded += line.taxIncluded;
 
       return summary;
     },
     {
       totalQuantity: 0,
       subtotal: 0,
+      taxIncluded: 0,
       total: 0,
     },
   );
@@ -79,6 +89,7 @@ export function toCartSummaryResponse(items: CartItem[]): CartSummaryResponse {
     totalQuantity: totals.totalQuantity,
     subtotal: roundMoney(totals.subtotal),
     discountTotal: roundMoney(totals.subtotal - totals.total),
+    taxIncluded: roundMoney(totals.taxIncluded),
     total: roundMoney(totals.total),
   };
 }
