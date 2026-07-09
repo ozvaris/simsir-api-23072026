@@ -4,5 +4,5 @@ export class OrderCustomerResponse {
   userName!: string;
   name!: string;
   surname!: string;
-  phone!: string | null;
+  phone!: string;
 }

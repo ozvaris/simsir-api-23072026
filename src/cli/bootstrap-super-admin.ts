@@ -16,7 +16,7 @@ type SuperAdminBootstrapConfig = {
   password: string;
   name: string;
   surname: string;
-  phone: string | null;
+  phone: string;
 };
 
 const logger = new Logger('BootstrapSuperAdmin');
@@ -48,7 +48,9 @@ function getBootstrapConfig(): SuperAdminBootstrapConfig {
   const surname = (
     process.env.BOOTSTRAP_SUPER_ADMIN_SURNAME ?? 'Admin'
   ).trim();
-  const phone = process.env.BOOTSTRAP_SUPER_ADMIN_PHONE?.trim() || null;
+  const phone = (
+    process.env.BOOTSTRAP_SUPER_ADMIN_PHONE ?? '+12025550100'
+  ).trim();
 
   if (!email) {
     throw new Error('BOOTSTRAP_SUPER_ADMIN_EMAIL must not be empty.');
@@ -68,6 +70,10 @@ function getBootstrapConfig(): SuperAdminBootstrapConfig {
 
   if (!surname) {
     throw new Error('BOOTSTRAP_SUPER_ADMIN_SURNAME must not be empty.');
+  }
+
+  if (!phone) {
+    throw new Error('BOOTSTRAP_SUPER_ADMIN_PHONE must not be empty.');
   }
 
   return {
@@ -112,6 +118,7 @@ async function createOrUpdateSuperAdmin(
     (await createSuperAdminUser(dataSource, config, passwordHash));
 
   if (existingUser) {
+    await syncSuperAdminUser(userRepository, existingUser, config);
     await ensureCredential(credentialRepository, user, passwordHash);
   }
 
@@ -167,6 +174,19 @@ async function createSuperAdminUser(
 
     return savedUser;
   });
+}
+
+async function syncSuperAdminUser(
+  userRepository: Repository<User>,
+  user: User,
+  config: SuperAdminBootstrapConfig,
+): Promise<void> {
+  user.email = config.email;
+  user.userName = config.userName;
+  user.name = config.name;
+  user.surname = config.surname;
+  user.phone = config.phone;
+  await userRepository.save(user);
 }
 
 async function ensureCredential(

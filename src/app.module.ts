@@ -1,6 +1,6 @@
 // src/app.module.ts
 
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { HttpLoggingMiddleware } from './common/middleware/http-logging.middleware';
 import { UsersModule } from './modules/users/users.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
@@ -25,6 +26,8 @@ import { ProductReviewsModule } from './modules/product-reviews/product-reviews.
 import { ProductsModule } from './modules/products/products.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { ShippingCarriersModule } from './modules/shipping-carriers/shipping-carriers.module';
+import { StorefrontModule } from './modules/storefront/storefront.module';
+import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
 
 @Module({
   imports: [
@@ -54,6 +57,7 @@ import { ShippingCarriersModule } from './modules/shipping-carriers/shipping-car
     UsersModule,
     CartModule,
     CategoriesModule,
+    SystemSettingsModule,
     ProductsModule,
     InventoryModule,
     ShippingCarriersModule,
@@ -64,6 +68,7 @@ import { ShippingCarriersModule } from './modules/shipping-carriers/shipping-car
     ProductMediaModule,
     ProductReviewsModule,
     ProductRelationsModule,
+    StorefrontModule,
     RbacModule,
   ],
   controllers: [AppController],
@@ -83,4 +88,8 @@ import { ShippingCarriersModule } from './modules/shipping-carriers/shipping-car
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpLoggingMiddleware).forRoutes('*');
+  }
+}

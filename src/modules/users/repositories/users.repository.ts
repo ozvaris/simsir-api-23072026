@@ -28,6 +28,12 @@ export class UsersRepository {
     });
   }
 
+  findUserByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { email },
+    });
+  }
+
   findAnotherUserByUserName(
     userId: string,
     userName: string,
@@ -36,6 +42,15 @@ export class UsersRepository {
       where: {
         id: Not(userId),
         userName,
+      },
+    });
+  }
+
+  findAnotherUserByEmail(userId: string, email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: {
+        id: Not(userId),
+        email,
       },
     });
   }

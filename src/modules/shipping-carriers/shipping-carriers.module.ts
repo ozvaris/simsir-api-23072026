@@ -2,6 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { ShippingCarrierServicePaymentCapability } from './entities/shipping-carrier-service-payment-capability.entity';
 import { ShippingCarrierService } from './entities/shipping-carrier-service.entity';
 import { ShippingCarrier } from './entities/shipping-carrier.entity';
@@ -15,6 +16,7 @@ import { ShippingCarriersService } from './shipping-carriers.service';
 
 @Module({
   imports: [
+    SystemSettingsModule,
     TypeOrmModule.forFeature([
       ShippingCarrier,
       ShippingCarrierService,

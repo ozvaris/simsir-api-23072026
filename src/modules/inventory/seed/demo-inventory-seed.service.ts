@@ -8,17 +8,17 @@ import { InventoryItem } from '../entities/inventory-item.entity';
 
 export const DEMO_INVENTORY_SEEDS = [
   {
-    productSlug: 'demo-wireless-headphones',
+    productSlug: 'nikecourt-zoom-vapor-cage',
     onHandQuantity: 24,
     reservedQuantity: 0,
   },
   {
-    productSlug: 'demo-smart-watch',
+    productSlug: 'iphone-13-pro-max',
     onHandQuantity: 12,
     reservedQuantity: 0,
   },
   {
-    productSlug: 'demo-phone-case',
+    productSlug: 'tarz-t3',
     onHandQuantity: 50,
     reservedQuantity: 0,
   },

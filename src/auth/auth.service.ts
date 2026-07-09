@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { UserCredential } from '../modules/users/entities/user-credential.entity';
 import { User } from '../modules/users/entities/user.entity';
@@ -28,7 +29,7 @@ type AuthUserResponse = {
   userName: string;
   name: string;
   surname: string;
-  phone: string | null;
+  phone: string;
 };
 
 type AuthTokenResponse = {
@@ -53,15 +54,16 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<AuthTokenResponse> {
     const email = dto.email.trim().toLowerCase();
-    const userName = dto.userName.trim();
 
     const existingUser = await this.userRepository.findOne({
-      where: [{ email }, { userName }],
+      where: { email },
     });
 
     if (existingUser) {
       throw new ConflictException('Email or username already exists');
     }
+
+    const userName = await this.generateUserName(dto.name, dto.surname);
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
@@ -71,7 +73,7 @@ export class AuthService {
         userName,
         name: dto.name.trim(),
         surname: dto.surname.trim(),
-        phone: dto.phone?.trim() || null,
+        phone: dto.phone.trim(),
       });
 
       const savedUser = await manager.save(User, createdUser);
@@ -210,5 +212,52 @@ export class AuthService {
       surname: user.surname,
       phone: user.phone,
     };
+  }
+
+  private async generateUserName(name: string, surname: string): Promise<string> {
+    const normalizedBase = this.normalizeUserNamePart(`${name} ${surname}`);
+    const base = normalizedBase || 'user';
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const randomSuffix = randomBytes(4).toString('hex');
+      const maxBaseLength = 80 - randomSuffix.length - 1;
+      const truncatedBase = base.slice(0, Math.max(maxBaseLength, 1));
+      const candidate = `${truncatedBase}-${randomSuffix}`;
+
+      const existingUser = await this.userRepository.findOne({
+        where: { userName: candidate },
+      });
+
+      if (!existingUser) {
+        return candidate;
+      }
+    }
+
+    throw new ConflictException('Email or username already exists');
+  }
+
+  private normalizeUserNamePart(value: string): string {
+    const normalizedChars: Record<string, string> = {
+      'ç': 'c',
+      'Ç': 'c',
+      'ğ': 'g',
+      'Ğ': 'g',
+      'ı': 'i',
+      'İ': 'i',
+      'ö': 'o',
+      'Ö': 'o',
+      'ş': 's',
+      'Ş': 's',
+      'ü': 'u',
+      'Ü': 'u',
+    };
+
+    return value
+      .trim()
+      .replace(/[çÇğĞıİöÖşŞüÜ]/g, (char) => normalizedChars[char] ?? char)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 }

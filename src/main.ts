@@ -2,7 +2,6 @@
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { HttpLoggingInterceptor } from './common/interceptors/http-logging.interceptor';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -20,8 +19,6 @@ async function bootstrap() {
       },
     }),
   );
-
-  app.useGlobalInterceptors(new HttpLoggingInterceptor());
 
   await app.listen(process.env.APP_PORT ?? 3000);
 }

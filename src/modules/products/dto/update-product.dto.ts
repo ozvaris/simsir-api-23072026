@@ -49,6 +49,12 @@ export class UpdateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(100)
+  tax?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   @Max(5)
   rating?: number;
 

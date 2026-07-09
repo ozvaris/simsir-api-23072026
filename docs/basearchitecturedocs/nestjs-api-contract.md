@@ -65,7 +65,6 @@ Request JSON:
 {
   "email": "hazel.martin@example.com",
   "password": "Password123!",
-  "userName": "hazel.martin",
   "name": "Hazel",
   "surname": "Martin",
   "phone": "+1 202 555 0189"
@@ -183,7 +182,9 @@ Response JSON:
   "userName": "hazel.martin",
   "name": "Hazel",
   "surname": "Martin",
-  "phone": "+1 202 555 0189"
+  "phone": "+1 202 555 0189",
+  "createdAt": "2025-01-12T10:30:00.000Z",
+  "updatedAt": "2026-06-18T01:55:00.000Z"
 }
 ```
 
@@ -260,6 +261,7 @@ Request JSON:
 
 ```json
 {
+  "email": "hazel.martin@example.com",
   "userName": "hazel.martin",
   "name": "Hazel",
   "surname": "Martin",
@@ -276,7 +278,9 @@ Response JSON:
   "userName": "hazel.martin",
   "name": "Hazel",
   "surname": "Martin",
-  "phone": "+1 202 555 0199"
+  "phone": "+1 202 555 0199",
+  "createdAt": "2025-01-12T10:30:00.000Z",
+  "updatedAt": "2026-06-18T01:55:00.000Z"
 }
 ```
 

@@ -18,7 +18,9 @@ type UserProfileResponse = {
   userName: string;
   name: string;
   surname: string;
-  phone: string | null;
+  phone: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 @Injectable()
@@ -48,14 +50,31 @@ export class UsersService {
     if (dto.userName && dto.userName !== user.userName) {
       const existingUser = await this.usersRepository.findAnotherUserByUserName(
         userId,
-        dto.userName,
+        dto.userName.trim(),
       );
 
       if (existingUser) {
-        throw new ConflictException('Username already exists');
+        throw new ConflictException('Username is already in use');
       }
 
       user.userName = dto.userName.trim();
+    }
+
+    if (dto.email) {
+      const nextEmail = dto.email.trim().toLowerCase();
+
+      if (nextEmail !== user.email) {
+        const existingUser = await this.usersRepository.findAnotherUserByEmail(
+          userId,
+          nextEmail,
+        );
+
+        if (existingUser) {
+          throw new ConflictException('Email is already in use');
+        }
+
+        user.email = nextEmail;
+      }
     }
 
     if (dto.name !== undefined) {
@@ -67,7 +86,7 @@ export class UsersService {
     }
 
     if (dto.phone !== undefined) {
-      user.phone = dto.phone?.trim() || null;
+      user.phone = dto.phone.trim();
     }
 
     const savedUser = await this.usersRepository.saveUser(user);
@@ -110,6 +129,8 @@ export class UsersService {
       name: user.name,
       surname: user.surname,
       phone: user.phone,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
     };
   }
 }

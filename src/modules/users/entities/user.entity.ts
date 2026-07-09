@@ -25,8 +25,8 @@ export class User extends AppBaseEntity {
   @Column({ type: 'varchar', length: 100 })
   surname!: string;
 
-  @Column({ type: 'varchar', length: 30, nullable: true })
-  phone!: string | null;
+  @Column({ type: 'varchar', length: 30 })
+  phone!: string;
 
   @OneToOne(() => UserCredential, (credential) => credential.user)
   credential!: UserCredential;

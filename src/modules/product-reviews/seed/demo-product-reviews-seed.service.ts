@@ -11,22 +11,22 @@ import { ProductReview } from '../entities/product-review.entity';
 
 export const DEMO_PRODUCT_REVIEW_SEEDS = [
   {
-    productSlug: 'demo-wireless-headphones',
+    productSlug: 'nikecourt-zoom-vapor-cage',
     userEmail: 'customer@example.com',
     ratingValue: '4.8',
-    comment: 'Comfortable demo headphones with clear sound.',
+    comment: 'Comfortable court shoe with a fast feel and strong support.',
   },
   {
-    productSlug: 'demo-smart-watch',
+    productSlug: 'iphone-13-pro-max',
     userEmail: 'customer@example.com',
     ratingValue: '4.5',
-    comment: 'Useful demo watch for storefront review testing.',
+    comment: 'Useful flagship phone for storefront flash deal testing.',
   },
   {
-    productSlug: 'demo-phone-case',
+    productSlug: 'tarz-t3',
     userEmail: 'customer@example.com',
     ratingValue: '4.2',
-    comment: 'Simple demo case with a clean product detail example.',
+    comment: 'Compact laptop with a clean product detail example.',
   },
 ] as const;
 

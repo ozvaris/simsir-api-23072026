@@ -140,6 +140,13 @@ Examples:
 - `rbac.user_role.remove`
 - `rbac.user_access.read`
 
+### System Setting Permissions
+
+- `system_setting.read`
+- `system_setting.create`
+- `system_setting.update`
+- `system_setting.delete`
+
 <a id="role-scope-summary"></a>
 
 ## Role Scope Summary
@@ -216,6 +223,7 @@ Expected denial:
 - RBAC management;
 - shipping carrier management;
 - payment method management;
+- system settings management;
 - order status/refund management unless explicitly granted;
 - user-role assignment.
 
@@ -260,6 +268,7 @@ Expected denial:
 
 - RBAC role/permission management;
 - catalog create/update/delete unless explicitly granted;
+- system settings management;
 - user-role assignment.
 
 Possible permissions:
@@ -302,6 +311,7 @@ Expected access:
 - read-only admin endpoints where support visibility is needed;
 - shipping carrier read;
 - payment method read;
+- system settings read;
 - future order read support screens.
 
 Expected denial:
@@ -320,6 +330,7 @@ Possible permissions:
 - `catalog.category.read`
 - `shipping_carrier.read`
 - `payment_method.read`
+- `system_setting.read`
 
 Postman token variable:
 
@@ -383,6 +394,8 @@ Postman token variable:
 | `/api/admin/shipping-carriers/...` write |     No |       No |                      No |              No |           Yes |         Yes |
 | `/api/admin/payment-methods/...` read    |     No |       No |                     Yes |              No |           Yes |         Yes |
 | `/api/admin/payment-methods/...` write   |     No |       No |                      No |              No |           Yes |         Yes |
+| `/api/admin/system-settings/...` read    |     No |       No |                     Yes |              No |            No |         Yes |
+| `/api/admin/system-settings/...` write   |     No |       No |                      No |              No |            No |         Yes |
 | `/api/admin/orders/...` future           |     No |       No |    Read only if granted |              No |           Yes |         Yes |
 | `/api/admin/rbac/...`                    |     No |       No |                      No |              No |            No |         Yes |
 
@@ -489,25 +502,30 @@ Permission and role assignment changes must be reflected in:
 - `CUSTOMER` cannot access `/api/admin/rbac/roles`;
 - `CUSTOMER` cannot create/update/delete shipping carriers;
 - `CUSTOMER` cannot create/update/delete payment methods.
+- `CUSTOMER` cannot access `/api/admin/system-settings`.
 
 ### Super Admin Access
 
 - `SUPER_ADMIN` can access RBAC admin endpoints;
 - `SUPER_ADMIN` can access shipping carrier admin endpoints;
 - `SUPER_ADMIN` can access payment method admin endpoints.
+- `SUPER_ADMIN` can access system settings admin endpoints.
 
 ### Order Manager Access
 
 - `ORDER_MANAGER` can manage shipping carriers;
 - `ORDER_MANAGER` can manage payment methods;
+- `ORDER_MANAGER` cannot access system settings endpoints;
 - `ORDER_MANAGER` cannot manage RBAC roles.
 
 ### Support Staff Restrictions
 
 - `SUPPORT_STAFF` can read shipping carriers where read permission is granted;
 - `SUPPORT_STAFF` can read payment methods where read permission is granted;
+- `SUPPORT_STAFF` can read system settings where read permission is granted;
 - `SUPPORT_STAFF` cannot create/update/delete shipping carriers;
 - `SUPPORT_STAFF` cannot create/update/delete payment methods.
+- `SUPPORT_STAFF` cannot create/update/delete system settings.
 
 <a id="change-rules"></a>
 

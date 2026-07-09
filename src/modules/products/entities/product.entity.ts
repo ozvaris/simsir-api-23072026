@@ -39,6 +39,9 @@ export class Product extends AppBaseEntity {
   @Column({ type: 'numeric', precision: 12, scale: 2, default: 0 })
   discount!: string;
 
+  @Column({ type: 'numeric', precision: 5, scale: 2, default: 0 })
+  tax!: string;
+
   @Column({ type: 'numeric', precision: 2, scale: 1, default: 0 })
   rating!: string;
 

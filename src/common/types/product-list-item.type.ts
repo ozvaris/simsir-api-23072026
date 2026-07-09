@@ -13,6 +13,7 @@ export type ProductListItem = {
   isTrackedInventory: boolean;
   price: number;
   discount: number;
+  tax: number;
   rating: number;
   imgUrl: string | null;
   shortDescription: string | null;

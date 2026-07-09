@@ -42,8 +42,8 @@ const DEMO_ORDER_SEEDS = [
     paymentStatus: PaymentStatus.UNPAID,
     fulfillmentStatus: FulfillmentStatus.READY_FOR_SHIPMENT,
     items: [
-      { productSlug: 'demo-wireless-headphones', quantity: 1 },
-      { productSlug: 'demo-phone-case', quantity: 2 },
+      { productSlug: 'nikecourt-zoom-vapor-cage', quantity: 1 },
+      { productSlug: 'tarz-t3', quantity: 2 },
     ],
     notes: 'Pending COD demo order reserved for fulfillment flow testing.',
   },
@@ -57,7 +57,7 @@ const DEMO_ORDER_SEEDS = [
     orderStatus: OrderStatus.COMPLETED,
     paymentStatus: PaymentStatus.PAID,
     fulfillmentStatus: FulfillmentStatus.DELIVERED,
-    items: [{ productSlug: 'demo-smart-watch', quantity: 1 }],
+    items: [{ productSlug: 'iphone-13-pro-max', quantity: 1 }],
     notes: 'Delivered COD demo order committed to inventory.',
   },
 ] as const;

@@ -107,6 +107,10 @@ Run collections in this order:
    - `postman/09-orders-module-tests.postman_collection.json`
    - Verifies customer order lifecycle, admin workflow transitions, role guards, and inventory commit/release effects in one collection.
 
+10. **Storefront Home And Admin Tests**
+   - `postman/10-storefront-home-and-admin-tests.postman_collection.json`
+   - Verifies public storefront home response shape, featured category curation, storefront collection/item admin CRUD, and cleanup.
+
 ## Why This Order
 
 ### 1. Token setup comes first
@@ -157,6 +161,59 @@ Orders module tests depend on:
 - seeded tracked inventory and inventory admin behavior already verified by `05`
 
 The order collection itself creates its own cart/order runtime state, but it is easier to trust and interpret after the upstream catalog, checkout reference, inventory, and review-ready product surface has already been checked.
+
+### 8. Storefront tests should run after core catalog and product submodule checks
+
+Storefront tests depend on:
+
+- role tokens from `01-user-role-token-setup`
+- active demo categories and products being available
+- base catalog behavior already being healthy
+
+The storefront collection creates curated storefront records on top of the catalog surface, so it is easiest to interpret after the catalog and product-oriented checks have already passed.
+
+## Database Reset (Local Only)
+
+Use the following script only for local seed-data reset testing.
+
+Do not run this against production or any database with data that must be preserved.
+
+```sql
+DROP TABLE IF EXISTS
+  "cart_items",
+  "carts",
+  "order_status_history",
+  "order_shipment_snapshots",
+  "order_payment_snapshots",
+  "order_addresses",
+  "order_items",
+  "orders",
+  "inventory_transactions",
+  "inventory_reservations",
+  "inventory_items",
+  "storefront_collection_items",
+  "storefront_collections",
+  "storefront_featured_categories",
+  "addresses",
+  "user_credentials",
+  "user_roles",
+  "role_permissions",
+  "product_reviews",
+  "product_relations",
+  "product_media",
+  "products",
+  "categories",
+  "payment_providers",
+  "payment_methods",
+  "shipping_carrier_service_payment_capabilities",
+  "shipping_carrier_services",
+  "shipping_carriers",
+  "system_settings",
+  "permissions",
+  "roles",
+  "users"
+CASCADE;
+```
 
 ## Reset And Rerun Flow
 

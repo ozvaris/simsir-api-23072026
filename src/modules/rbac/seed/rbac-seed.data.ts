@@ -55,6 +55,10 @@ export const RBAC_SEED_PERMISSIONS = [
   'payment_method.create',
   'payment_method.update',
   'payment_method.delete',
+  'system_setting.read',
+  'system_setting.create',
+  'system_setting.update',
+  'system_setting.delete',
   'rbac.role.read',
   'rbac.role.create',
   'rbac.role.update',
@@ -108,6 +112,7 @@ export const RBAC_SEED_ROLE_PERMISSIONS: Record<string, string[]> = {
     'shipping_carrier.read',
     'payment_method.read',
     'inventory.read',
+    'system_setting.read',
   ],
   CUSTOMER: [],
 };

@@ -10,6 +10,7 @@ export class CategoryProductResponse {
   categoryId!: ProductListItem['categoryId'];
   price!: ProductListItem['price'];
   discount!: ProductListItem['discount'];
+  tax!: ProductListItem['tax'];
   rating!: ProductListItem['rating'];
   imgUrl!: ProductListItem['imgUrl'];
   shortDescription!: ProductListItem['shortDescription'];

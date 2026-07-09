@@ -6,6 +6,8 @@ import {
 import { QueryFailedError } from 'typeorm';
 import { PaymentMethodCode } from '../../common/enums/payment-method-code.enum';
 import { RecordStatus } from '../../common/enums/record-status.enum';
+import { SYSTEM_SETTING_KEYS } from '../system-settings/constants/system-setting-keys';
+import { SystemSettingsService } from '../system-settings/system-settings.service';
 import { CreateShippingCarrierDto } from './dto/create-shipping-carrier.dto';
 import { CreateShippingCarrierServicePaymentCapabilityDto } from './dto/create-shipping-carrier-service-payment-capability.dto';
 import { CreateShippingCarrierServiceDto } from './dto/create-shipping-carrier-service.dto';
@@ -34,14 +36,20 @@ export class ShippingCarriersService {
     private readonly shippingCarriersRepository: ShippingCarriersRepository,
     private readonly shippingCarrierServicesRepository: ShippingCarrierServicesRepository,
     private readonly shippingCarrierServicePaymentCapabilitiesRepository: ShippingCarrierServicePaymentCapabilitiesRepository,
+    private readonly systemSettingsService: SystemSettingsService,
   ) {}
 
   async listPublic(): Promise<ShippingCarrierListResponse<ShippingCarrierPublicResponse>> {
     const shippingCarrierServices =
       await this.shippingCarrierServicesRepository.findActivePublic();
+    const freeShippingThreshold = this.systemSettingsService.getNumber(
+      SYSTEM_SETTING_KEYS.ORDER_FREE_SHIPPING_THRESHOLD,
+      1000,
+    );
 
     return new ShippingCarrierListResponse({
       items: shippingCarrierServices.map(toShippingCarrierPublicResponse),
+      freeShippingThreshold,
     });
   }
 

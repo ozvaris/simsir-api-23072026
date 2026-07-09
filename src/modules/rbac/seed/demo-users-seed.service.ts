@@ -18,6 +18,7 @@ export const DEMO_USER_SEEDS = [
     userName: 'catalog.manager',
     name: 'Catalog',
     surname: 'Manager',
+    phone: '+12025550111',
   },
   {
     roleCode: 'ORDER_MANAGER',
@@ -25,6 +26,7 @@ export const DEMO_USER_SEEDS = [
     userName: 'order.manager',
     name: 'Order',
     surname: 'Manager',
+    phone: '+12025550112',
   },
   {
     roleCode: 'SUPPORT_STAFF',
@@ -32,6 +34,7 @@ export const DEMO_USER_SEEDS = [
     userName: 'support.staff',
     name: 'Support',
     surname: 'Staff',
+    phone: '+12025550113',
   },
   {
     roleCode: 'CUSTOMER',
@@ -39,6 +42,7 @@ export const DEMO_USER_SEEDS = [
     userName: 'customer',
     name: 'Demo',
     surname: 'Customer',
+    phone: '+12025550114',
   },
 ] as const;
 
@@ -122,6 +126,8 @@ export class DemoUsersSeedService {
     const existingUser = existingUsers[0];
 
     if (existingUser) {
+      existingUser.phone = seed.phone;
+      await this.userRepository.save(existingUser);
       await this.ensureCredential(existingUser, passwordHash);
       return existingUser;
     }
@@ -132,7 +138,7 @@ export class DemoUsersSeedService {
         userName: seed.userName,
         name: seed.name,
         surname: seed.surname,
-        phone: null,
+        phone: seed.phone,
       });
 
       const savedUser = await manager.save(User, user);

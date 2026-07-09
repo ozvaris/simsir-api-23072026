@@ -1,0 +1,1609 @@
+{
+  "info": {
+    "name": "Simsir - 10 Storefront Home And Admin Tests",
+    "_postman_id": "3f5aeb6d-8de8-4fd7-9323-storefront-home-and-admin-tests",
+    "description": "Storefront home and admin regression tests covering public home shape, featured category CRUD, storefront collection CRUD, collection item CRUD, and cleanup.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Prerequisite Capture Demo Category And Product Ids",
+      "item": [
+        {
+          "name": "GET /api/categories - capture demo categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const automobile = items.find(function (item) { return item.slug === 'automobile'; });",
+                  "const fashion = items.find(function (item) { return item.slug === 'fashion'; });",
+                  "pm.test('Automobile category exists', function () { pm.expect(automobile).to.exist; });",
+                  "pm.test('Fashion category exists', function () { pm.expect(fashion).to.exist; });",
+                  "if (automobile) {",
+                  "  pm.environment.set('storefrontHomeAdminTestFeaturedCategoryId1', automobile.id);",
+                  "  pm.environment.set('storefrontHomeAdminTestFeaturedCategorySlug1', automobile.slug);",
+                  "}",
+                  "if (fashion) {",
+                  "  pm.environment.set('storefrontHomeAdminTestFeaturedCategoryId2', fashion.id);",
+                  "  pm.environment.set('storefrontHomeAdminTestFeaturedCategorySlug2', fashion.slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/products?limit=100 - capture demo products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const nikecourt = items.find(function (item) { return item.slug === 'nikecourt-zoom-vapor-cage'; });",
+                  "const iphone = items.find(function (item) { return item.slug === 'iphone-13-pro-max'; });",
+                  "pm.test('NikeCourt Zoom Vapor Cage product exists', function () { pm.expect(nikecourt).to.exist; });",
+                  "pm.test('IPhone 13 Pro Max product exists', function () { pm.expect(iphone).to.exist; });",
+                  "if (nikecourt) {",
+                  "  pm.environment.set('storefrontHomeAdminTestProductId1', nikecourt.id);",
+                  "  pm.environment.set('storefrontHomeAdminTestProductSlug1', nikecourt.slug);",
+                  "}",
+                  "if (iphone) {",
+                  "  pm.environment.set('storefrontHomeAdminTestProductId2', iphone.id);",
+                  "  pm.environment.set('storefrontHomeAdminTestProductSlug2', iphone.slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/products?limit=100",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Prepare temporary category slugs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.environment.set('storefrontHomeAdminTestTempCategorySlug1', 'storefront-temp-category-' + suffix + '-1');",
+                  "pm.environment.set('storefrontHomeAdminTestTempCategorySlug2', 'storefront-temp-category-' + suffix + '-2');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Public Storefront Home Baseline",
+      "item": [
+        {
+          "name": "GET /api/storefront/home - public should return static hero banners",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "pm.test('Storefront home has data object', function () {",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.be.an('object');",
+                  "});",
+                  "pm.test('Hero banners are present and static shape is correct', function () {",
+                  "  pm.expect(json.data.heroBanners).to.be.an('array');",
+                  "  pm.expect(json.data.heroBanners.length).to.eql(2);",
+                  "  json.data.heroBanners.forEach(function (item) {",
+                  "    pm.expect(item.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.title).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.description).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.cta).to.be.an('object');",
+                  "    pm.expect(item.cta.label).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.cta.href).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.image).to.be.an('object');",
+                  "    pm.expect(item.image.url).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.image.alt).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "});",
+                  "pm.test('Featured categories and product collections arrays exist', function () {",
+                  "  pm.expect(json.data.featuredCategories).to.be.an('array');",
+                  "  pm.expect(json.data.productCollections).to.be.an('array');",
+                  "  pm.expect(json.data.featuredCategories.length).to.be.above(0);",
+                  "  pm.expect(json.data.productCollections.length).to.be.above(0);",
+                  "  const flashDeals = json.data.productCollections.find(function (item) { return item.type === 'flash-deals'; });",
+                  "  const moreForYou = json.data.productCollections.find(function (item) { return item.type === 'editor-picks'; });",
+                  "  pm.expect(flashDeals).to.exist;",
+                  "  pm.expect(moreForYou).to.exist;",
+                  "  pm.expect(moreForYou.title).to.eql('More For You');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/storefront/home",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "storefront",
+                "home"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 CUSTOMER Access - Storefront Admin Should Be 403",
+      "item": [
+        {
+          "name": "CUSTOMER - GET /api/admin/storefront/collections should return 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 CATALOG_MANAGER Featured Category CRUD",
+      "item": [
+        {
+          "name": "POST /api/admin/categories - create first temporary category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestFeaturedCategoryId1', json.id); }",
+                  "pm.test('First temporary category is created', function () {",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.slug).to.eql(pm.environment.get('storefrontHomeAdminTestTempCategorySlug1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{storefrontHomeAdminTestTempCategorySlug1}}\",\n  \"name\": \"Storefront Temp Category 1\",\n  \"imgUrl\": \"/assets/superstore/category-fashion.png\",\n  \"sortOrder\": 910,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/categories - create second temporary category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestFeaturedCategoryId2', json.id); }",
+                  "pm.test('Second temporary category is created', function () {",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.slug).to.eql(pm.environment.get('storefrontHomeAdminTestTempCategorySlug2'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{storefrontHomeAdminTestTempCategorySlug2}}\",\n  \"name\": \"Storefront Temp Category 2\",\n  \"imgUrl\": \"/assets/superstore/category-mobile.png\",\n  \"sortOrder\": 920,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/storefront/featured-categories - create first featured category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestFeaturedEntryId1', json.id); }",
+                  "pm.test('Created featured category response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestFeaturedEntryId1'));",
+                  "  pm.expect(json.categoryId).to.eql(pm.environment.get('storefrontHomeAdminTestFeaturedCategoryId1'));",
+                  "  pm.expect(json.sortOrder).to.eql(910);",
+                  "  pm.expect(json.status).to.eql('active');",
+                  "  pm.expect(json.category.slug).to.eql(pm.environment.get('storefrontHomeAdminTestTempCategorySlug1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{storefrontHomeAdminTestFeaturedCategoryId1}}\",\n  \"sortOrder\": 910,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/storefront/featured-categories - create second featured category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestFeaturedEntryId2', json.id); }",
+                  "pm.test('Created second featured category response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestFeaturedEntryId2'));",
+                  "  pm.expect(json.categoryId).to.eql(pm.environment.get('storefrontHomeAdminTestFeaturedCategoryId2'));",
+                  "  pm.expect(json.sortOrder).to.eql(920);",
+                  "  pm.expect(json.status).to.eql('active');",
+                  "  pm.expect(json.category.slug).to.eql(pm.environment.get('storefrontHomeAdminTestTempCategorySlug2'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{storefrontHomeAdminTestFeaturedCategoryId2}}\",\n  \"sortOrder\": 920,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/storefront/featured-categories - list should include created entries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const featured1 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestFeaturedEntryId1'); });",
+                  "const featured2 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestFeaturedEntryId2'); });",
+                  "pm.test('Featured category list returns both created entries', function () {",
+                  "  pm.expect(featured1).to.exist;",
+                  "  pm.expect(featured2).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 CATALOG_MANAGER Storefront Collection CRUD",
+      "item": [
+        {
+          "name": "POST /api/admin/storefront/collections - create collection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestCollectionId', json.id); }",
+                  "pm.test('Created collection response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionId'));",
+                  "  pm.expect(json.type).to.eql('new-arrivals');",
+                  "  pm.expect(json.title).to.eql('New Arrivals');",
+                  "  pm.expect(json.viewAllHref).to.eql('/products');",
+                  "  pm.expect(json.sortOrder).to.eql(20);",
+                  "  pm.expect(json.status).to.eql('active');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"new-arrivals\",\n  \"title\": \"New Arrivals\",\n  \"viewAllHref\": \"/products\",\n  \"sortOrder\": 20,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/storefront/collections/:collectionId/items - create first collection item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestCollectionItemId1', json.id); }",
+                  "pm.test('Created first collection item response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionItemId1'));",
+                  "  pm.expect(json.collectionId).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionId'));",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('storefrontHomeAdminTestProductId1'));",
+                  "  pm.expect(json.sortOrder).to.eql(10);",
+                  "  pm.expect(json.status).to.eql('active');",
+                  "  pm.expect(json.product.slug).to.eql(pm.environment.get('storefrontHomeAdminTestProductSlug1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}/items",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{storefrontHomeAdminTestProductId1}}\",\n  \"sortOrder\": 10,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/storefront/collections/:collectionId/items - create second collection item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is one of [200, 201]', function () { pm.expect([200, 201]).to.include(pm.response.code); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.environment.set('storefrontHomeAdminTestCollectionItemId2', json.id); }",
+                  "pm.test('Created second collection item response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionItemId2'));",
+                  "  pm.expect(json.collectionId).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionId'));",
+                  "  pm.expect(json.productId).to.eql(pm.environment.get('storefrontHomeAdminTestProductId2'));",
+                  "  pm.expect(json.sortOrder).to.eql(20);",
+                  "  pm.expect(json.status).to.eql('active');",
+                  "  pm.expect(json.product.slug).to.eql(pm.environment.get('storefrontHomeAdminTestProductSlug2'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}/items",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{storefrontHomeAdminTestProductId2}}\",\n  \"sortOrder\": 20,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/storefront/collections/:collectionId/items - list should include both items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const item1 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionItemId1'); });",
+                  "const item2 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionItemId2'); });",
+                  "pm.test('Collection item list returns both created items', function () {",
+                  "  pm.expect(item1).to.exist;",
+                  "  pm.expect(item2).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}/items",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/storefront/collections/items/:itemId - update second item sort order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "pm.test('Updated item response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionItemId2'));",
+                  "  pm.expect(json.sortOrder).to.eql(5);",
+                  "  pm.expect(json.product.slug).to.eql(pm.environment.get('storefrontHomeAdminTestProductSlug2'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/items/{{storefrontHomeAdminTestCollectionItemId2}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "items",
+                "{{storefrontHomeAdminTestCollectionItemId2}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/storefront/collections/:collectionId - update collection title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "pm.test('Updated collection response is correct', function () {",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('storefrontHomeAdminTestCollectionId'));",
+                  "  pm.expect(json.type).to.eql('new-arrivals');",
+                  "  pm.expect(json.title).to.eql('New Arrivals Updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Arrivals Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Public Storefront Home Verification",
+      "item": [
+        {
+          "name": "GET /api/storefront/home - public should reflect curated featured categories and collection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const featuredCategories = Array.isArray(json.data && json.data.featuredCategories) ? json.data.featuredCategories : [];",
+                  "const productCollections = Array.isArray(json.data && json.data.productCollections) ? json.data.productCollections : [];",
+                  "const categorySlug1 = pm.environment.get('storefrontHomeAdminTestTempCategorySlug1');",
+                  "const categorySlug2 = pm.environment.get('storefrontHomeAdminTestTempCategorySlug2');",
+                  "const productSlug1 = pm.environment.get('storefrontHomeAdminTestProductSlug1');",
+                  "const productSlug2 = pm.environment.get('storefrontHomeAdminTestProductSlug2');",
+                  "const featured1 = featuredCategories.find(function (item) { return item.slug === categorySlug1; });",
+                  "const featured2 = featuredCategories.find(function (item) { return item.slug === categorySlug2; });",
+                  "const newArrivals = productCollections.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionId'); });",
+                  "pm.test('Storefront home exposes curated featured categories', function () {",
+                  "  pm.expect(featured1).to.exist;",
+                  "  pm.expect(featured2).to.exist;",
+                  "  pm.expect(featured1.image).to.be.an('object');",
+                  "  pm.expect(featured2.image).to.be.an('object');",
+                  "});",
+                  "pm.test('Storefront home exposes curated new arrivals collection', function () {",
+                  "  pm.expect(newArrivals).to.exist;",
+                  "  pm.expect(newArrivals.type).to.eql('new-arrivals');",
+                  "  pm.expect(newArrivals.title).to.eql('New Arrivals Updated');",
+                  "  pm.expect(newArrivals.viewAllHref).to.eql('/products');",
+                  "  pm.expect(newArrivals.products).to.be.an('array');",
+                  "  pm.expect(newArrivals.products.length).to.eql(2);",
+                  "});",
+                  "pm.test('Collection product ordering follows updated sort order', function () {",
+                  "  pm.expect(newArrivals.products[0].slug).to.eql(productSlug2);",
+                  "  pm.expect(newArrivals.products[1].slug).to.eql(productSlug1);",
+                  "});",
+                  "pm.test('Collection product shape includes nested image and category slug', function () {",
+                  "  newArrivals.products.forEach(function (item) {",
+                  "    pm.expect(item.categorySlug).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.image).to.be.an('object');",
+                  "    pm.expect(item.image.url).to.be.a('string').and.not.empty;",
+                  "    pm.expect(item.image.alt).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "});",
+                  "pm.test('Storefront home still exposes More For You seed collection', function () {",
+                  "  const moreForYou = productCollections.find(function (item) { return item.type === 'editor-picks'; });",
+                  "  pm.expect(moreForYou).to.exist;",
+                  "  pm.expect(moreForYou.title).to.eql('More For You');",
+                  "  pm.expect(moreForYou.products).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/storefront/home",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "storefront",
+                "home"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Cleanup Delete Storefront Fixtures And Unset Temp Variables",
+      "item": [
+        {
+          "name": "DELETE /api/admin/storefront/collections/items/:itemId - delete first collection item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/items/{{storefrontHomeAdminTestCollectionItemId1}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "items",
+                "{{storefrontHomeAdminTestCollectionItemId1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/storefront/collections/:collectionId/items - deleted item should be absent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const item1 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionItemId1'); });",
+                  "const item2 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionItemId2'); });",
+                  "pm.test('Deleted first item is absent and second item remains', function () {",
+                  "  pm.expect(item1).to.not.exist;",
+                  "  pm.expect(item2).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}/items",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/storefront/collections/:collectionId - delete collection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections/{{storefrontHomeAdminTestCollectionId}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections",
+                "{{storefrontHomeAdminTestCollectionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/storefront/collections - deleted collection should be absent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const collection = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestCollectionId'); });",
+                  "pm.test('Deleted collection is absent from list', function () {",
+                  "  pm.expect(collection).to.not.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/collections",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "collections"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/storefront/featured-categories/:featuredCategoryId - delete first featured category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories/{{storefrontHomeAdminTestFeaturedEntryId1}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories",
+                "{{storefrontHomeAdminTestFeaturedEntryId1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/storefront/featured-categories/:featuredCategoryId - delete second featured category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories/{{storefrontHomeAdminTestFeaturedEntryId2}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories",
+                "{{storefrontHomeAdminTestFeaturedEntryId2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/storefront/featured-categories - deleted featured categories should be absent and vars unset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is JSON', function () { pm.response.to.be.json; });",
+                  "const json = pm.response.json();",
+                  "const items = Array.isArray(json.items) ? json.items : [];",
+                  "const featured1 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestFeaturedEntryId1'); });",
+                  "const featured2 = items.find(function (item) { return item.id === pm.environment.get('storefrontHomeAdminTestFeaturedEntryId2'); });",
+                  "pm.test('Deleted featured categories are absent from list', function () {",
+                  "  pm.expect(featured1).to.not.exist;",
+                  "  pm.expect(featured2).to.not.exist;",
+                  "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/storefront/featured-categories",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "storefront",
+                "featured-categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/categories/:categoryId - delete first temporary category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/categories/{{storefrontHomeAdminTestFeaturedCategoryId1}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories",
+                "{{storefrontHomeAdminTestFeaturedCategoryId1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/categories/:categoryId - delete second temporary category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Delete response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedCategoryId1');",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedCategorySlug1');",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedCategoryId2');",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedCategorySlug2');",
+                  "pm.environment.unset('storefrontHomeAdminTestProductId1');",
+                  "pm.environment.unset('storefrontHomeAdminTestProductSlug1');",
+                  "pm.environment.unset('storefrontHomeAdminTestProductId2');",
+                  "pm.environment.unset('storefrontHomeAdminTestProductSlug2');",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedEntryId1');",
+                  "pm.environment.unset('storefrontHomeAdminTestFeaturedEntryId2');",
+                  "pm.environment.unset('storefrontHomeAdminTestCollectionId');",
+                  "pm.environment.unset('storefrontHomeAdminTestCollectionItemId1');",
+                  "pm.environment.unset('storefrontHomeAdminTestCollectionItemId2');",
+                  "pm.environment.unset('storefrontHomeAdminTestTempCategorySlug1');",
+                  "pm.environment.unset('storefrontHomeAdminTestTempCategorySlug2');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{catalog_manager_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/categories/{{storefrontHomeAdminTestFeaturedCategoryId2}}",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories",
+                "{{storefrontHomeAdminTestFeaturedCategoryId2}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

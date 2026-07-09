@@ -11,23 +11,23 @@ import { ProductRelationType } from '../enums/product-relation-type.enum';
 
 export const DEMO_PRODUCT_RELATION_SEEDS = [
   {
-    sourceProductSlug: 'demo-wireless-headphones',
-    targetProductSlug: 'demo-smart-watch',
+    sourceProductSlug: 'nikecourt-zoom-vapor-cage',
+    targetProductSlug: 'iphone-13-pro-max',
     relationType: ProductRelationType.RELATED_PRODUCT,
   },
   {
-    sourceProductSlug: 'demo-smart-watch',
-    targetProductSlug: 'demo-wireless-headphones',
+    sourceProductSlug: 'iphone-13-pro-max',
+    targetProductSlug: 'nikecourt-zoom-vapor-cage',
     relationType: ProductRelationType.RELATED_PRODUCT,
   },
   {
-    sourceProductSlug: 'demo-smart-watch',
-    targetProductSlug: 'demo-phone-case',
+    sourceProductSlug: 'iphone-13-pro-max',
+    targetProductSlug: 'tarz-t3',
     relationType: ProductRelationType.FREQUENTLY_BOUGHT_TOGETHER,
   },
   {
-    sourceProductSlug: 'demo-phone-case',
-    targetProductSlug: 'demo-smart-watch',
+    sourceProductSlug: 'tarz-t3',
+    targetProductSlug: 'iphone-13-pro-max',
     relationType: ProductRelationType.FREQUENTLY_BOUGHT_TOGETHER,
   },
 ] as const;

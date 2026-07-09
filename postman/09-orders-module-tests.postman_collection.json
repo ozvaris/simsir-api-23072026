@@ -135,7 +135,9 @@
                   "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
                   "const json = pm.response.json();",
                   "const items = Array.isArray(json.items) ? json.items : [];",
+                  "pm.test('Response includes free shipping threshold', function () { pm.expect(json.freeShippingThreshold).to.be.a('number'); });",
                   "pm.test('At least one public shipping service exists', function () { pm.expect(items.length).to.be.above(0); });",
+                  "pm.environment.set('ordersModuleTestFreeShippingThreshold', String(json.freeShippingThreshold));",
                   "if (items.length > 0) { pm.environment.set('ordersModuleTestShippingServiceId', items[0].id); }"
                 ]
               }

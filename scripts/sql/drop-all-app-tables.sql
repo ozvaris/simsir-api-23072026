@@ -17,6 +17,9 @@ DROP TABLE IF EXISTS
   "inventory_transactions",
   "inventory_reservations",
   "inventory_items",
+  "storefront_collection_items",
+  "storefront_collections",
+  "storefront_featured_categories",
   "addresses",
   "user_credentials",
   "user_roles",
@@ -31,6 +34,7 @@ DROP TABLE IF EXISTS
   "shipping_carrier_service_payment_capabilities",
   "shipping_carrier_services",
   "shipping_carriers",
+  "system_settings",
   "permissions",
   "roles",
   "users"

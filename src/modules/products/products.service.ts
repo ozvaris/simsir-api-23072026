@@ -108,6 +108,7 @@ export class ProductsService {
       categoryId: dto.categoryId,
       price: dto.price.toFixed(2),
       discount: (dto.discount ?? 0).toFixed(2),
+      tax: (dto.tax ?? 0).toFixed(2),
       rating: (dto.rating ?? 0).toFixed(1),
       imgUrl: dto.imgUrl?.trim() || null,
       shortDescription: dto.shortDescription?.trim() || null,
@@ -169,6 +170,10 @@ export class ProductsService {
 
     if (dto.discount !== undefined) {
       product.discount = dto.discount.toFixed(2);
+    }
+
+    if (dto.tax !== undefined) {
+      product.tax = dto.tax.toFixed(2);
     }
 
     if (dto.rating !== undefined) {

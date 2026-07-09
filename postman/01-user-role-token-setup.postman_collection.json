@@ -52,7 +52,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"userName\": \"customer\",\n  \"name\": \"Customer\",\n  \"surname\": \"User\",\n  \"phone\": \"+90 555 555 55 51\"\n}",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"name\": \"Customer\",\n  \"surname\": \"User\",\n  \"phone\": \"+90 555 555 55 51\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -116,7 +116,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"catalog.manager@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"userName\": \"catalog.manager\",\n  \"name\": \"Catalog\",\n  \"surname\": \"Manager\",\n  \"phone\": \"+90 555 555 55 54\"\n}",
+              "raw": "{\n  \"email\": \"catalog.manager@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"name\": \"Catalog\",\n  \"surname\": \"Manager\",\n  \"phone\": \"+90 555 555 55 54\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -180,7 +180,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"order.manager@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"userName\": \"order.manager\",\n  \"name\": \"Order\",\n  \"surname\": \"Manager\",\n  \"phone\": \"+90 555 555 55 52\"\n}",
+              "raw": "{\n  \"email\": \"order.manager@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"name\": \"Order\",\n  \"surname\": \"Manager\",\n  \"phone\": \"+90 555 555 55 52\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -244,7 +244,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"support.staff@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"userName\": \"support.staff\",\n  \"name\": \"Support\",\n  \"surname\": \"Staff\",\n  \"phone\": \"+90 555 555 55 53\"\n}",
+              "raw": "{\n  \"email\": \"support.staff@example.com\",\n  \"password\": \"{{Demo_User_Password}}\",\n  \"name\": \"Support\",\n  \"surname\": \"Staff\",\n  \"phone\": \"+90 555 555 55 53\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1596,6 +1596,288 @@
         }
       ],
       "description": "Calls GET /api/auth/me/access with each token and verifies expected role/isAdmin behavior."
+    },
+    {
+      "name": "06 Verify Current User Profile Contract",
+      "item": [
+        {
+          "name": "GET /api/users/me - capture current CUSTOMER profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('Profile shape is valid', function () {",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.email).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.userName).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.name).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.surname).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.phone).to.be.a('string');",
+                  "  pm.expect(json.createdAt).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.updatedAt).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('usersMeContractCurrentEmail', json.email);",
+                  "pm.collectionVariables.set('usersMeContractCurrentUserName', json.userName);",
+                  "pm.collectionVariables.set('usersMeContractCurrentName', json.name);",
+                  "pm.collectionVariables.set('usersMeContractCurrentSurname', json.surname);",
+                  "pm.collectionVariables.set('usersMeContractCurrentPhone', json.phone || '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/users/me",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/users/me - update CUSTOMER profile with current values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('Updated profile shape is valid', function () {",
+                  "  pm.expect(json.email).to.eql(pm.collectionVariables.get('usersMeContractCurrentEmail'));",
+                  "  pm.expect(json.userName).to.eql(pm.collectionVariables.get('usersMeContractCurrentUserName'));",
+                  "  pm.expect(json.name).to.eql(pm.collectionVariables.get('usersMeContractCurrentName'));",
+                  "  pm.expect(json.surname).to.eql(pm.collectionVariables.get('usersMeContractCurrentSurname'));",
+                  "  pm.expect(json.phone).to.eql(pm.collectionVariables.get('usersMeContractCurrentPhone'));",
+                  "  pm.expect(json.createdAt).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.updatedAt).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{usersMeContractCurrentEmail}}\",\n  \"userName\": \"{{usersMeContractCurrentUserName}}\",\n  \"name\": \"{{usersMeContractCurrentName}}\",\n  \"surname\": \"{{usersMeContractCurrentSurname}}\",\n  \"phone\": \"{{usersMeContractCurrentPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/users/me",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/users/me - CUSTOMER email conflict should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Conflict message is correct', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql('Email is already in use');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"catalog.manager@example.com\",\n  \"userName\": \"{{usersMeContractCurrentUserName}}\",\n  \"name\": \"{{usersMeContractCurrentName}}\",\n  \"surname\": \"{{usersMeContractCurrentSurname}}\",\n  \"phone\": \"{{usersMeContractCurrentPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/users/me",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/users/me - CUSTOMER username conflict should return 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Conflict message is correct', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql('Username is already in use');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{usersMeContractCurrentEmail}}\",\n  \"userName\": \"catalog.manager\",\n  \"name\": \"{{usersMeContractCurrentName}}\",\n  \"surname\": \"{{usersMeContractCurrentSurname}}\",\n  \"phone\": \"{{usersMeContractCurrentPhone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/users/me",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Verifies the current authenticated customer profile surface, response shape, stable PATCH contract, and email/username conflict behavior."
     }
   ],
   "variable": [

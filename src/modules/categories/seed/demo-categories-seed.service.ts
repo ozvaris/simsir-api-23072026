@@ -6,28 +6,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RecordStatus } from '../../../common/enums/record-status.enum';
 import { shouldRunSeed } from '../../../common/seed/seed-execution-policy';
+import { STOREFRONT_MASTER_CATEGORY_SEEDS } from '../../../common/seed/storefront-master-seed.data';
 import { Category } from '../entities/category.entity';
 
-export const DEMO_CATEGORY_SEEDS = [
-  {
-    slug: 'demo-electronics',
-    name: 'Demo Electronics',
-    imgUrl: '/assets/demo/categories/electronics.png',
-    sortOrder: 10,
-  },
-  {
-    slug: 'demo-audio',
-    name: 'Demo Audio',
-    imgUrl: '/assets/demo/categories/audio.png',
-    sortOrder: 20,
-  },
-  {
-    slug: 'demo-accessories',
-    name: 'Demo Accessories',
-    imgUrl: '/assets/demo/categories/accessories.png',
-    sortOrder: 30,
-  },
-] as const;
+export const DEMO_CATEGORY_SEEDS = STOREFRONT_MASTER_CATEGORY_SEEDS;
 
 @Injectable()
 export class DemoCategoriesSeedService implements OnModuleInit {
@@ -56,6 +38,12 @@ export class DemoCategoriesSeedService implements OnModuleInit {
       });
 
       if (existingCategory) {
+        existingCategory.parentId = null;
+        existingCategory.name = seed.name;
+        existingCategory.imgUrl = seed.imgUrl;
+        existingCategory.sortOrder = seed.sortOrder;
+        existingCategory.status = RecordStatus.ACTIVE;
+        await this.categoryRepository.save(existingCategory);
         continue;
       }
 

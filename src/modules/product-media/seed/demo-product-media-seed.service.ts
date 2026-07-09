@@ -10,27 +10,27 @@ import { ProductMedia } from '../entities/product-media.entity';
 
 export const DEMO_PRODUCT_MEDIA_SEEDS = [
   {
-    productSlug: 'demo-wireless-headphones',
-    src: '/assets/demo/products/wireless-headphones-gallery-1.png',
-    alt: 'Demo wireless headphones front view',
+    productSlug: 'nikecourt-zoom-vapor-cage',
+    src: '/assets/superstore/flash-1.png',
+    alt: 'NikeCourt Zoom Vapor Cage front view',
     sortOrder: 1,
   },
   {
-    productSlug: 'demo-wireless-headphones',
-    src: '/assets/demo/products/wireless-headphones-gallery-2.png',
-    alt: 'Demo wireless headphones side view',
+    productSlug: 'nikecourt-zoom-vapor-cage',
+    src: '/assets/superstore/category-fashion.png',
+    alt: 'NikeCourt Zoom Vapor Cage alternate view',
     sortOrder: 2,
   },
   {
-    productSlug: 'demo-smart-watch',
-    src: '/assets/demo/products/smart-watch-gallery-1.png',
-    alt: 'Demo smart watch front view',
+    productSlug: 'iphone-13-pro-max',
+    src: '/assets/superstore/flash-3.png',
+    alt: 'IPhone 13 Pro Max front view',
     sortOrder: 1,
   },
   {
-    productSlug: 'demo-phone-case',
-    src: '/assets/demo/products/phone-case-gallery-1.png',
-    alt: 'Demo phone case front view',
+    productSlug: 'tarz-t3',
+    src: '/assets/superstore/more-tarz-t3.png',
+    alt: 'Tarz T3 front view',
     sortOrder: 1,
   },
 ] as const;

@@ -48,6 +48,7 @@ export function mapProductListItem(product: Product): ProductListItem {
     isTrackedInventory: product.isTrackedInventory,
     price: toNumber(product.price),
     discount: toNumber(product.discount),
+    tax: toNumber(product.tax),
     rating: toNumber(product.rating),
     imgUrl: product.imgUrl,
     shortDescription: product.shortDescription,

@@ -6,53 +6,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RecordStatus } from '../../../common/enums/record-status.enum';
 import { shouldRunSeed } from '../../../common/seed/seed-execution-policy';
+import { STOREFRONT_MASTER_PRODUCT_SEEDS } from '../../../common/seed/storefront-master-seed.data';
 import { Category } from '../../categories/entities/category.entity';
+import { SYSTEM_SETTING_KEYS } from '../../system-settings/constants/system-setting-keys';
+import { SystemSettingsService } from '../../system-settings/system-settings.service';
 import { Product } from '../entities/product.entity';
 
-export const DEMO_PRODUCT_SEEDS = [
-  {
-    slug: 'demo-wireless-headphones',
-    title: 'Demo Wireless Headphones',
-    brandName: 'DemoSound',
-    categorySlug: 'demo-audio',
-    isTrackedInventory: true,
-    price: '129.99',
-    discount: '10.00',
-    rating: '4.7',
-    imgUrl: '/assets/demo/products/wireless-headphones.png',
-    shortDescription: 'Demo wireless headphones for catalog testing.',
-    longDescription:
-      'A non-production demo product used for local catalog and storefront testing.',
-  },
-  {
-    slug: 'demo-smart-watch',
-    title: 'Demo Smart Watch',
-    brandName: 'DemoWear',
-    categorySlug: 'demo-electronics',
-    isTrackedInventory: true,
-    price: '199.99',
-    discount: '0.00',
-    rating: '4.5',
-    imgUrl: '/assets/demo/products/smart-watch.png',
-    shortDescription: 'Demo smart watch for catalog testing.',
-    longDescription:
-      'A non-production demo product used for local product detail testing.',
-  },
-  {
-    slug: 'demo-phone-case',
-    title: 'Demo Phone Case',
-    brandName: 'DemoCase',
-    categorySlug: 'demo-accessories',
-    isTrackedInventory: true,
-    price: '24.99',
-    discount: '0.00',
-    rating: '4.3',
-    imgUrl: '/assets/demo/products/phone-case.png',
-    shortDescription: 'Demo phone case for catalog testing.',
-    longDescription:
-      'A non-production demo product used for local category/product flows.',
-  },
-] as const;
+export const DEMO_PRODUCT_SEEDS = STOREFRONT_MASTER_PRODUCT_SEEDS;
 
 @Injectable()
 export class DemoProductsSeedService implements OnModuleInit {
@@ -66,6 +26,8 @@ export class DemoProductsSeedService implements OnModuleInit {
 
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+
+    private readonly systemSettingsService: SystemSettingsService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -78,6 +40,10 @@ export class DemoProductsSeedService implements OnModuleInit {
   }
 
   private async seedProducts(): Promise<void> {
+    const defaultTax = this.systemSettingsService
+      .getNumber(SYSTEM_SETTING_KEYS.PRODUCT_DEFAULT_TAX, 0)
+      .toFixed(2);
+
     for (const seed of DEMO_PRODUCT_SEEDS) {
       const category = await this.categoryRepository.findOne({
         where: { slug: seed.categorySlug },
@@ -90,19 +56,33 @@ export class DemoProductsSeedService implements OnModuleInit {
         continue;
       }
 
-      await this.findOrCreateProduct(seed, category.id);
+      await this.findOrCreateProduct(seed, category.id, defaultTax);
     }
   }
 
   private async findOrCreateProduct(
     seed: (typeof DEMO_PRODUCT_SEEDS)[number],
     categoryId: string,
+    defaultTax: string,
   ): Promise<Product> {
     const existingProduct = await this.productRepository.findOne({
       where: { slug: seed.slug },
     });
 
     if (existingProduct) {
+      existingProduct.title = seed.title;
+      existingProduct.brandName = seed.brandName;
+      existingProduct.categoryId = categoryId;
+      existingProduct.price = seed.price;
+      existingProduct.discount = seed.discount;
+      existingProduct.tax = defaultTax;
+      existingProduct.rating = seed.rating;
+      existingProduct.imgUrl = seed.imgUrl;
+      existingProduct.shortDescription = seed.shortDescription;
+      existingProduct.longDescription = seed.shortDescription;
+      existingProduct.isTrackedInventory = seed.isTrackedInventory;
+      existingProduct.status = RecordStatus.ACTIVE;
+      await this.productRepository.save(existingProduct);
       return existingProduct;
     }
 
@@ -115,10 +95,11 @@ export class DemoProductsSeedService implements OnModuleInit {
         isTrackedInventory: seed.isTrackedInventory,
         price: seed.price,
         discount: seed.discount,
+        tax: defaultTax,
         rating: seed.rating,
         imgUrl: seed.imgUrl,
         shortDescription: seed.shortDescription,
-        longDescription: seed.longDescription,
+        longDescription: seed.shortDescription,
         status: RecordStatus.ACTIVE,
       }),
     );
