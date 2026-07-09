@@ -1,5 +1,7 @@
 # Markdown Document Creation Protocol
 
+Last updated: 2026-07-09 19:49:52
+
 <a id="purpose"></a>
 
 ## Purpose
@@ -11,6 +13,7 @@ It is not a source-code link protocol. Link formatting rules belong to [markdown
 This document answers:
 
 - how a Markdown document should be structured;
+- when a document should include a `Last updated` timestamp;
 - when a document should have a `Contents` section;
 - how stable anchors should be used;
 - how document boundaries should be protected;
@@ -65,6 +68,8 @@ A major Markdown document should use this structure:
 ```md
 # Document Title
 
+Last updated: YYYY-MM-DD HH:MM:SS
+
 <a id="purpose"></a>
 
 ## Purpose
@@ -88,14 +93,30 @@ Document content...
 The recommended order is:
 
 1. title;
-2. stable `purpose` anchor;
-3. `Purpose` section;
-4. stable `contents` anchor;
-5. `Contents` section;
-6. main sections;
-7. maintenance/checklist section when useful.
+2. `Last updated` line in `YYYY-MM-DD HH:MM:SS` local-time format;
+3. stable `purpose` anchor;
+4. `Purpose` section;
+5. stable `contents` anchor;
+6. `Contents` section;
+7. main sections;
+8. maintenance/checklist section when useful.
 
 Small short notes may skip `Contents`, but long or reusable documents must include it.
+
+Every maintained Markdown document should include a `Last updated` line near the top, directly under the title.
+
+Use this exact format:
+
+```md
+Last updated: 2026-07-09 19:49:52
+```
+
+The goal is simple maintenance visibility.
+
+- Use local timestamp format: `YYYY-MM-DD HH:MM:SS`.
+- Update the timestamp whenever the document is meaningfully changed.
+- Keep it directly under the `#` title line.
+- Do not hide it in a footer or metadata block.
 
 <a id="contents-section-protocol"></a>
 
@@ -306,13 +327,14 @@ target document
 When updating a Markdown document:
 
 1. Identify the document's responsibility.
-2. Add or update content in the correct section.
-3. Add a new stable anchor if a new major section is introduced.
-4. Update the `Contents` section.
-5. Check that same-file links still match anchor ids.
-6. Avoid cross-file section links unless there is a strong reason.
-7. Keep the document current; remove obsolete or misleading text.
-8. If the change affects another documentation role, update that document too.
+2. Update the `Last updated` date.
+3. Add or update content in the correct section.
+4. Add a new stable anchor if a new major section is introduced.
+5. Update the `Contents` section.
+6. Check that same-file links still match anchor ids.
+7. Avoid cross-file section links unless there is a strong reason.
+8. Keep the document current; remove obsolete or misleading text.
+9. If the change affects another documentation role, update that document too.
 
 Example:
 
@@ -352,6 +374,7 @@ A good new document has:
 Before accepting a Markdown document, check:
 
 - Does the document have one clear responsibility?
+- Does it include a `Last updated: YYYY-MM-DD HH:MM:SS` line under the title?
 - Does it start with a clear `Purpose` section?
 - Does it need a `Contents` section?
 - Are stable anchors present before main headings?

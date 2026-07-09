@@ -20,6 +20,7 @@ DROP TABLE IF EXISTS
   "storefront_collection_items",
   "storefront_collections",
   "storefront_featured_categories",
+  "checkout_drafts",
   "addresses",
   "user_credentials",
   "user_roles",

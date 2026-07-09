@@ -263,6 +263,323 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "CUSTOMER - GET /api/checkout/draft should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Response has checkout draft shape', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('shippingOption');",
+                  "  pm.expect(json).to.have.property('shippingServiceId');",
+                  "  pm.expect(json).to.have.property('shippingAddressId');",
+                  "  pm.expect(json).to.have.property('billingAddressId');",
+                  "  pm.expect(json).to.have.property('sameAsShipping');",
+                  "  pm.expect(json).to.have.property('paymentMethodId');",
+                  "  pm.expect(json.sameAsShipping).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/checkout/draft",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "draft"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - PATCH /api/checkout/draft pickup should return 200",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const baseUrl = pm.environment.get('Backend_URL');",
+                  "const customerToken = pm.environment.get('customer_access_token');",
+                  "pm.sendRequest({",
+                  "  url: baseUrl + '/api/users/me/addresses',",
+                  "  method: 'GET',",
+                  "  header: {",
+                  "    Accept: 'application/json',",
+                  "    Authorization: 'Bearer ' + customerToken",
+                  "  }",
+                  "}, function (addressErr, addressRes) {",
+                  "  if (addressErr) throw addressErr;",
+                  "  const addressJson = addressRes.json();",
+                  "  const shippingAddress = (addressJson.items || []).find(function (item) { return item.type === 'shipping'; });",
+                  "  const billingAddress = (addressJson.items || []).find(function (item) { return item.type === 'billing'; });",
+                  "  if (!shippingAddress || !billingAddress) {",
+                  "    throw new Error('Checkout draft tests require seeded shipping and billing addresses for the customer user');",
+                  "  }",
+                  "  pm.environment.set('checkoutDraftTestShippingAddressId', shippingAddress.id);",
+                  "  pm.environment.set('checkoutDraftTestBillingAddressId', billingAddress.id);",
+                  "  pm.sendRequest({",
+                  "    url: baseUrl + '/api/shipping-carriers',",
+                  "    method: 'GET',",
+                  "    header: { Accept: 'application/json' }",
+                  "  }, function (shippingErr, shippingRes) {",
+                  "    if (shippingErr) throw shippingErr;",
+                  "    const shippingJson = shippingRes.json();",
+                  "    const shippingService = (shippingJson.items || [])[0];",
+                  "    if (!shippingService || !shippingService.id) {",
+                  "      throw new Error('Checkout draft tests require at least one public shipping service');",
+                  "    }",
+                  "    pm.environment.set('checkoutDraftTestShippingServiceId', shippingService.id);",
+                  "    pm.sendRequest({",
+                  "      url: baseUrl + '/api/payment-methods?shippingServiceId=' + shippingService.id,",
+                  "      method: 'GET',",
+                  "      header: { Accept: 'application/json' }",
+                  "    }, function (paymentErr, paymentRes) {",
+                  "      if (paymentErr) throw paymentErr;",
+                  "      const paymentJson = paymentRes.json();",
+                  "      const paymentMethod = (paymentJson.items || []).find(function (item) { return item.isSelectable !== false; });",
+                  "      if (!paymentMethod || !paymentMethod.id) {",
+                  "        throw new Error('Checkout draft tests require at least one selectable payment method for the captured shipping service');",
+                  "      }",
+                  "      pm.environment.set('checkoutDraftTestPaymentMethodId', paymentMethod.id);",
+                  "    });",
+                  "  });",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Pickup draft response normalizes address state', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.shippingOption).to.eql('pickup');",
+                  "  pm.expect(json.shippingServiceId).to.eql(pm.environment.get('checkoutDraftTestShippingServiceId'));",
+                  "  pm.expect(json.shippingAddressId).to.equal(null);",
+                  "  pm.expect(json.billingAddressId).to.equal(null);",
+                  "  pm.expect(json.sameAsShipping).to.equal(true);",
+                  "  pm.expect(json.paymentMethodId).to.eql(pm.environment.get('checkoutDraftTestPaymentMethodId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/checkout/draft",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "draft"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingOption\": \"pickup\",\n  \"shippingServiceId\": \"{{checkoutDraftTestShippingServiceId}}\",\n  \"shippingAddressId\": \"{{checkoutDraftTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{checkoutDraftTestBillingAddressId}}\",\n  \"sameAsShipping\": true,\n  \"paymentMethodId\": \"{{checkoutDraftTestPaymentMethodId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - PATCH /api/checkout/draft carrier should return 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Carrier draft response preserves explicit addresses', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.shippingOption).to.eql('carrier');",
+                  "  pm.expect(json.shippingServiceId).to.eql(pm.environment.get('checkoutDraftTestShippingServiceId'));",
+                  "  pm.expect(json.shippingAddressId).to.eql(pm.environment.get('checkoutDraftTestShippingAddressId'));",
+                  "  pm.expect(json.billingAddressId).to.eql(pm.environment.get('checkoutDraftTestBillingAddressId'));",
+                  "  pm.expect(json.sameAsShipping).to.equal(false);",
+                  "  pm.expect(json.paymentMethodId).to.eql(pm.environment.get('checkoutDraftTestPaymentMethodId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/checkout/draft",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "draft"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingOption\": \"carrier\",\n  \"shippingServiceId\": \"{{checkoutDraftTestShippingServiceId}}\",\n  \"shippingAddressId\": \"{{checkoutDraftTestShippingAddressId}}\",\n  \"billingAddressId\": \"{{checkoutDraftTestBillingAddressId}}\",\n  \"sameAsShipping\": false,\n  \"paymentMethodId\": \"{{checkoutDraftTestPaymentMethodId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - GET /api/checkout/draft should restore saved carrier state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is JSON', function () {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "pm.test('Saved carrier draft is restored', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.shippingOption).to.eql('carrier');",
+                  "  pm.expect(json.shippingServiceId).to.eql(pm.environment.get('checkoutDraftTestShippingServiceId'));",
+                  "  pm.expect(json.shippingAddressId).to.eql(pm.environment.get('checkoutDraftTestShippingAddressId'));",
+                  "  pm.expect(json.billingAddressId).to.eql(pm.environment.get('checkoutDraftTestBillingAddressId'));",
+                  "  pm.expect(json.sameAsShipping).to.equal(false);",
+                  "  pm.expect(json.paymentMethodId).to.eql(pm.environment.get('checkoutDraftTestPaymentMethodId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{Backend_URL}}/api/checkout/draft",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "draft"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
