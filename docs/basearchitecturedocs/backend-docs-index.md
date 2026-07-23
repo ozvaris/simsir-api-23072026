@@ -45,3 +45,6 @@ It links to document-level references only. Each document owns its own same-file
 
 - [Postman Run Order Guide](./postman-run-order-guide.md)
   - Defines the recommended Postman/Newman collection execution order, shared environment usage, runtime export flow, reset/rerun steps, and collection dependency notes.
+
+- [Postman Methods Summary](./postman-methods-summary.md)
+  - Summarizes what each Postman collection is for, which endpoint method groups it contains, and which collections are most useful for manual operations versus regression testing.

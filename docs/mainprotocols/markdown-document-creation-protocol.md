@@ -1,6 +1,6 @@
 # Markdown Document Creation Protocol
 
-Last updated: 2026-07-09 19:49:52
+Last updated: 2026-07-12 22:20:14
 
 <a id="purpose"></a>
 
@@ -154,6 +154,9 @@ Avoid:
 
 The goal is navigation, not visual clutter.
 
+Markdown documentation is not written to look impressive.
+It is written to provide the shortest mental path to the correct architectural information.
+
 <a id="stable-anchor-protocol"></a>
 
 ## Stable Anchor Protocol
@@ -261,7 +264,7 @@ Examples:
 - Endpoint details belong in API contract documentation.
 - Entity relationships belong in entity documentation.
 - Case studies belong in module pattern documentation.
-- Link rules belong in markdown link protocol documentation.
+- Link rules belong in [markdown-link-protocol.md](./markdown-link-protocol.md).
 
 Do not explain abandoned decisions unless the document is explicitly historical.
 

@@ -13,6 +13,7 @@ import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { UserCredential } from '../modules/users/entities/user-credential.entity';
 import { User } from '../modules/users/entities/user.entity';
+import { RbacQueryService } from '../modules/rbac/services/rbac-query.service';
 import { CurrentUser } from '../common/types/current-user.type';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -36,6 +37,7 @@ type AuthTokenResponse = {
   user: AuthUserResponse;
   accessToken: string;
   refreshToken: string;
+  isAdmin: boolean;
 };
 
 @Injectable()
@@ -44,6 +46,7 @@ export class AuthService {
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly rbacQueryService: RbacQueryService,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -90,10 +93,18 @@ export class AuthService {
     });
 
     const tokens = await this.signTokens(user);
+    const { isAdmin } = await this.rbacQueryService.getAuthorizationSummary(
+      user.id,
+      {
+        email: user.email,
+        userName: user.userName,
+      },
+    );
 
     return {
       user: this.toAuthUserResponse(user),
       ...tokens,
+      isAdmin,
     };
   }
 
@@ -121,10 +132,18 @@ export class AuthService {
     }
 
     const tokens = await this.signTokens(credential.user);
+    const { isAdmin } = await this.rbacQueryService.getAuthorizationSummary(
+      credential.user.id,
+      {
+        email: credential.user.email,
+        userName: credential.user.userName,
+      },
+    );
 
     return {
       user: this.toAuthUserResponse(credential.user),
       ...tokens,
+      isAdmin,
     };
   }
 
@@ -151,10 +170,18 @@ export class AuthService {
     }
 
     const tokens = await this.signTokens(user);
+    const { isAdmin } = await this.rbacQueryService.getAuthorizationSummary(
+      user.id,
+      {
+        email: user.email,
+        userName: user.userName,
+      },
+    );
 
     return {
       user: this.toAuthUserResponse(user),
       ...tokens,
+      isAdmin,
     };
   }
 
