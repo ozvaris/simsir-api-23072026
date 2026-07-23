@@ -329,6 +329,29 @@ Response JSON:
 }
 ```
 
+### `PATCH /api/admin/users/password/by-email`
+
+Purpose:
+
+- allow `SUPER_ADMIN` to reset a user's password by email when the user cannot log in and the user id is not available.
+
+Request JSON:
+
+```json
+{
+  "email": "hazel.martin@example.com",
+  "newPassword": "NewPassword456!"
+}
+```
+
+Response JSON:
+
+```json
+{
+  "success": true
+}
+```
+
 <a id="addresses-api"></a>
 
 ## Addresses API

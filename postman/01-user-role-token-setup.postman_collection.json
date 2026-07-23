@@ -1883,7 +1883,7 @@
       "name": "07 SUPER_ADMIN Reset User Password",
       "item": [
         {
-          "name": "SUPER_ADMIN - PATCH /api/admin/users/:userId/password should reset CUSTOMER password",
+          "name": "SUPER_ADMIN - PATCH /api/admin/users/password/by-email should reset CUSTOMER password",
           "event": [
             {
               "listen": "test",
@@ -1926,7 +1926,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"newPassword\": \"{{Admin_Reset_Test_Password}}\"\n}",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"newPassword\": \"{{Admin_Reset_Test_Password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1934,7 +1934,7 @@
               }
             },
             "url": {
-              "raw": "{{Backend_URL}}/api/admin/users/{{customer_user_id}}/password",
+              "raw": "{{Backend_URL}}/api/admin/users/password/by-email",
               "host": [
                 "{{Backend_URL}}"
               ],
@@ -1942,8 +1942,8 @@
                 "api",
                 "admin",
                 "users",
-                "{{customer_user_id}}",
-                "password"
+                "password",
+                "by-email"
               ]
             }
           },
@@ -2015,7 +2015,7 @@
           "response": []
         },
         {
-          "name": "SUPER_ADMIN - PATCH /api/admin/users/:userId/password should restore CUSTOMER default password",
+          "name": "SUPER_ADMIN - PATCH /api/admin/users/password/by-email should restore CUSTOMER default password",
           "event": [
             {
               "listen": "test",
@@ -2058,7 +2058,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"newPassword\": \"{{Demo_User_Password}}\"\n}",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"newPassword\": \"{{Demo_User_Password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2066,7 +2066,7 @@
               }
             },
             "url": {
-              "raw": "{{Backend_URL}}/api/admin/users/{{customer_user_id}}/password",
+              "raw": "{{Backend_URL}}/api/admin/users/password/by-email",
               "host": [
                 "{{Backend_URL}}"
               ],
@@ -2074,8 +2074,8 @@
                 "api",
                 "admin",
                 "users",
-                "{{customer_user_id}}",
-                "password"
+                "password",
+                "by-email"
               ]
             }
           },
@@ -2147,7 +2147,7 @@
           "response": []
         }
       ],
-      "description": "Verifies that SUPER_ADMIN can reset a user's password, that the user can log in with the reset password, and then restores the default demo password for downstream collections."
+      "description": "Verifies that SUPER_ADMIN can reset a user's password by email, that the user can log in with the reset password, and then restores the default demo password for downstream collections."
     }
   ],
   "variable": [
