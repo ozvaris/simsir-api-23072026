@@ -1878,6 +1878,276 @@
         }
       ],
       "description": "Verifies the current authenticated customer profile surface, response shape, stable PATCH contract, and email/username conflict behavior."
+    },
+    {
+      "name": "07 SUPER_ADMIN Reset User Password",
+      "item": [
+        {
+          "name": "SUPER_ADMIN - PATCH /api/admin/users/:userId/password should reset CUSTOMER password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{super_admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"{{Admin_Reset_Test_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/users/{{customer_user_id}}/password",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{customer_user_id}}",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - POST /api/auth/login should succeed with reset password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken, 'access token').to.exist;",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const user = json.user || json.data?.user || json;",
+                  "const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "if (accessToken) pm.environment.set('customer_access_token', accessToken);",
+                  "if (user?.id) pm.environment.set('customer_user_id', user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"{{Admin_Reset_Test_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SUPER_ADMIN - PATCH /api/admin/users/:userId/password should restore CUSTOMER default password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response confirms success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{super_admin_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/admin/users/{{customer_user_id}}/password",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{customer_user_id}}",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CUSTOMER - POST /api/auth/login should succeed with restored default password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "  const json = pm.response.json();",
+                  "  const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "  pm.expect(accessToken, 'access token').to.exist;",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const user = json.user || json.data?.user || json;",
+                  "const accessToken = json.accessToken || json.access_token || json.data?.accessToken || json.tokens?.accessToken;",
+                  "if (accessToken) pm.environment.set('customer_access_token', accessToken);",
+                  "if (user?.id) pm.environment.set('customer_user_id', user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"{{Demo_User_Password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Backend_URL}}/api/auth/login",
+              "host": [
+                "{{Backend_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Verifies that SUPER_ADMIN can reset a user's password, that the user can log in with the reset password, and then restores the default demo password for downstream collections."
     }
   ],
   "variable": [
@@ -1894,6 +2164,11 @@
     {
       "key": "Bootstrap_Super_Admin_Password",
       "value": "",
+      "type": "string"
+    },
+    {
+      "key": "Admin_Reset_Test_Password",
+      "value": "ResetPassword456!",
       "type": "string"
     }
   ]

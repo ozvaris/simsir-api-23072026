@@ -6,12 +6,13 @@ import { Address } from './entities/address.entity';
 import { UserCredential } from './entities/user-credential.entity';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './repositories/users.repository';
+import { UsersAdminController } from './users-admin.controller';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, UserCredential, Address])],
-  controllers: [UsersController],
+  controllers: [UsersController, UsersAdminController],
   providers: [UsersService, UsersRepository],
   exports: [UsersService, UsersRepository],
 })

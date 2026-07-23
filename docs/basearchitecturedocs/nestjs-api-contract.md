@@ -307,6 +307,28 @@ Response JSON:
 }
 ```
 
+### `PATCH /api/admin/users/:userId/password`
+
+Purpose:
+
+- allow `SUPER_ADMIN` to reset a user's password when the user cannot access their account.
+
+Request JSON:
+
+```json
+{
+  "newPassword": "NewPassword456!"
+}
+```
+
+Response JSON:
+
+```json
+{
+  "success": true
+}
+```
+
 <a id="addresses-api"></a>
 
 ## Addresses API

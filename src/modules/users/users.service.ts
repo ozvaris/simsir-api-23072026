@@ -2,11 +2,14 @@
 
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import type { CurrentUser } from '../../common/types/current-user.type';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
@@ -112,6 +115,35 @@ export class UsersService {
 
     if (!isCurrentPasswordValid) {
       throw new UnauthorizedException('Current password is invalid');
+    }
+
+    credential.passwordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.usersRepository.saveCredential(credential);
+
+    return { success: true };
+  }
+
+  async adminResetPassword(
+    targetUserId: string,
+    dto: AdminResetPasswordDto,
+    currentUser: CurrentUser,
+  ): Promise<{ success: true }> {
+    if (!currentUser.roles?.includes('SUPER_ADMIN')) {
+      throw new ForbiddenException('Only SUPER_ADMIN can reset user passwords');
+    }
+
+    const targetUser = await this.usersRepository.findUserById(targetUserId);
+
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const credential =
+      await this.usersRepository.findCredentialByUserId(targetUserId);
+
+    if (!credential) {
+      throw new NotFoundException('Credential not found');
     }
 
     credential.passwordHash = await bcrypt.hash(dto.newPassword, 10);
